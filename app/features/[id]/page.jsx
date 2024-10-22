@@ -1,73 +1,68 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import { useRouter } from 'next/router'
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Edit2, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
+import useAuthRedirect from "../../utils/useAuthRedirect";
+import { useFeatureStore } from "@/app/store/feature";
+import { useEndPointStore } from "@/app/store/endpoint";
 
-// Mock data - in a real application, you'd fetch this data based on the feature ID
-const mockFeatureDetails = {
-  id: 1,
-  name: "Feature 1",
-  description:
-    "Detailed description for Feature 1. This feature provides enhanced functionality for user management, including role-based access control and advanced permission settings.",
-  active: true,
-  useCases: [
-    {
-      id: 1,
-      title: "User Role Management",
-      description: "Easily assign and manage user roles within the system.",
-    },
-    {
-      id: 2,
-      title: "Permission Customization",
-      description: "Create custom permission sets for granular access control.",
-    },
-  ],
-  endpoints: [
-    { id: 1, name: "Get User Roles", url: "/api/feature1/user-roles" },
-    {
-      id: 2,
-      name: "Update Permissions",
-      url: "/api/feature1/update-permissions",
-    },
-  ],
-};
-
-export default function FeatureDetailsPage({ params }) {
-  // const router = useRouter()
-  const id = params.id;
-  const [feature, setFeature] = useState(mockFeatureDetails);
-  const [originalFeature, setOriginalFeature] = useState(mockFeatureDetails);
+function FeatureDetailsPage({ params }) {
+  useAuthRedirect();
+  const feature = useFeatureStore((state) => state.feature);
+  const get_feature = useFeatureStore((state) => state.getSingleFeature);
+  const patch_feature = useFeatureStore((state) => state.patchFeature);
+  const get_drop_endpoints = useEndPointStore(
+    (state) => state.getDropEndPoints,
+  );
+  const drop_endpoints = useEndPointStore((state) => state.drop_endpoints);
+  const [editForm, setEditForm] = useState(feature);
   const [isEditing, setIsEditing] = useState(false);
-  const [newEndpoint, setNewEndpoint] = useState({ name: "", url: "" });
+  const [newEndpoint, setNewEndpoint] = useState(null);
+
+  useEffect(() => {
+    get_feature(params.id);
+    get_drop_endpoints();
+    // console.log(drop_endpoints)
+  }, [get_feature, params.id, get_drop_endpoints]);
 
   const handleEdit = () => {
-    setOriginalFeature({ ...feature });
     setIsEditing(true);
   };
 
   const handleSave = () => {
+    patch_feature(editForm, 1, 1);
     setIsEditing(false);
-    // Here you would typically send an API request to update the feature
   };
 
   const handleCancel = () => {
-    setFeature({ ...originalFeature });
     setIsEditing(false);
+  };
+
+  const handleSelect = (e) => {
+    let newValue = drop_endpoints.filter((endpoint) => endpoint.id == e)[0]
+      .name;
+    setNewEndpoint(newValue);
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFeature((prev) => ({
+    setEditForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
@@ -75,19 +70,16 @@ export default function FeatureDetailsPage({ params }) {
 
   const handleAddEndpoint = (e) => {
     e.preventDefault();
-    const newId = Math.max(...feature.endpoints.map((e) => e.id)) + 1;
-    setFeature((prev) => ({
-      ...prev,
-      endpoints: [...prev.endpoints, { id: newId, ...newEndpoint }],
-    }));
-    setNewEndpoint({ name: "", url: "" });
+
+    console.log(e.target.endpoint.value);
   };
 
   const handleDeleteEndpoint = (id) => {
-    setFeature((prev) => ({
-      ...prev,
-      endpoints: prev.endpoints.filter((e) => e.id !== id),
-    }));
+    // setFeature((prev) => ({
+    //   ...prev,
+    //   endpoints: prev.endpoints.filter((e) => e.id !== id),
+    // }));
+    console.log(id);
   };
 
   return (
@@ -130,7 +122,7 @@ export default function FeatureDetailsPage({ params }) {
                 <Input
                   id="name"
                   name="name"
-                  value={feature.name}
+                  value={editForm?.name}
                   onChange={handleChange}
                 />
               </div>
@@ -139,7 +131,7 @@ export default function FeatureDetailsPage({ params }) {
                 <Textarea
                   id="description"
                   name="description"
-                  value={feature.description}
+                  value={editForm?.description}
                   onChange={handleChange}
                   rows={4}
                 />
@@ -148,7 +140,7 @@ export default function FeatureDetailsPage({ params }) {
                 <Switch
                   id="active"
                   name="active"
-                  checked={feature.active}
+                  checked={editForm?.active}
                   onCheckedChange={(checked) =>
                     handleChange({
                       target: { name: "active", type: "checkbox", checked },
@@ -162,20 +154,20 @@ export default function FeatureDetailsPage({ params }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold text-amber-800">Name</h3>
-                <p className="text-gray-700">{feature.name}</p>
+                <p className="text-gray-700">{feature?.name}</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-amber-800">
                   Description
                 </h3>
-                <p className="text-gray-700">{feature.description}</p>
+                <p className="text-gray-700">{feature?.description}</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-amber-800">Status</h3>
                 <span
-                  className={`px-2 py-1 rounded-full text-sm ${feature.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                  className={`px-2 py-1 rounded-full text-sm ${feature?.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                 >
-                  {feature.active ? "Active" : "Inactive"}
+                  {feature?.active ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>
@@ -190,18 +182,30 @@ export default function FeatureDetailsPage({ params }) {
         </TabsList>
         <TabsContent value="usecases">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {feature.useCases.map((useCase) => (
-              <Card key={useCase.id} className="bg-amber-50">
-                <CardHeader>
-                  <CardTitle className="text-amber-800">
-                    {useCase.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700">{useCase.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+            <Card className="bg-amber-50">
+              <CardHeader>
+                <CardTitle className="text-amber-800">
+                  Feature Endpoint Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700">
+                  Easily assign and manage user roles within the system
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-amber-50">
+              <CardHeader>
+                <CardTitle className="text-amber-800">
+                  Permission Customization
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700">
+                  Create custom permission sets for granular access control.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
         <TabsContent value="endpoints">
@@ -213,38 +217,40 @@ export default function FeatureDetailsPage({ params }) {
               <form onSubmit={handleAddEndpoint} className="space-y-4">
                 <div>
                   <Label htmlFor="endpointName">Endpoint Name</Label>
-                  <Input
-                    id="endpointName"
-                    value={newEndpoint.name}
-                    onChange={(e) =>
-                      setNewEndpoint((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+                  <Select
+                    onValueChange={handleSelect}
+                    className="text-black mitest"
+                    name="endpoint"
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder="Select a endpoint"
+                        className="text-black"
+                      >
+                        {newEndpoint}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {drop_endpoints?.map((endpoint) => (
+                        <SelectItem
+                          className="text-black"
+                          key={"ep" + endpoint?.id}
+                          value={endpoint?.id}
+                          name={endpoint?.name}
+                        >
+                          {endpoint.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <Label htmlFor="endpointUrl">Endpoint URL</Label>
-                  <Input
-                    id="endpointUrl"
-                    value={newEndpoint.url}
-                    onChange={(e) =>
-                      setNewEndpoint((prev) => ({
-                        ...prev,
-                        url: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
+
                 <Button type="submit">Add Endpoint</Button>
               </form>
             </CardContent>
           </Card>
           <div className="mt-4 space-y-2">
-            {feature.endpoints.map((endpoint) => (
+            {feature?.endpoints?.map((endpoint) => (
               <div
                 key={endpoint.id}
                 className="flex justify-between items-center p-3 bg-amber-50 rounded-lg"
@@ -268,3 +274,5 @@ export default function FeatureDetailsPage({ params }) {
     </div>
   );
 }
+
+export default FeatureDetailsPage;

@@ -4,14 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import {
   Select,
   SelectContent,
@@ -19,15 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PlusCircle,
-  Edit2,
-  Save,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Trash2,
-} from "lucide-react";
+import { PlusCircle, Edit2, Save, X, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -40,90 +25,52 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import useAuthRedirect from "../utils/useAuthRedirect";
+import { useAppStore } from "../store/app";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { Textarea } from "@/components/ui/textarea";
 
-const mockApps = [
-  {
-    id: 1,
-    name: "App 1",
-    description: "Description for App 1",
-    active: true,
-  },
-  {
-    id: 2,
-    name: "App 2",
-    description: "Description for App 2",
-    active: false,
-  },
-  {
-    id: 3,
-    name: "App 3",
-    description: "Description for App 3",
-    active: true,
-  },
-  {
-    id: 4,
-    name: "App 4",
-    description: "Description for App 4",
-    active: true,
-  },
-  {
-    id: 5,
-    name: "App 5",
-    description: "Description for App 5",
-    active: false,
-  },
-  {
-    id: 6,
-    name: "App 6",
-    description: "Description for App 6",
-    active: true,
-  },
-  {
-    id: 7,
-    name: "App 7",
-    description: "Description for App 7",
-    active: true,
-  },
-  {
-    id: 8,
-    name: "App 8",
-    description: "Description for App 8",
-    active: false,
-  },
-  {
-    id: 9,
-    name: "App 9",
-    description: "Description for App 9",
-    active: true,
-  },
-  {
-    id: 10,
-    name: "App 10",
-    description: "Description for App 10",
-    active: false,
-  },
-];
-
-export default function AppsPage() {
-  const [apps, setApps] = useState(mockApps);
+function AppsPage() {
+  useAuthRedirect();
+  const apps = useAppStore((state) => state.filtered_apps);
+  const get_apps = useAppStore((state) => state.getApps);
+  const patch_app = useAppStore((state) => state.patchApp);
+  const post_app = useAppStore((state) => state.postApp);
+  const delete_app = useAppStore((state) => state.deleteApp);
+  const totalPages = useAppStore((state) => state.pages);
+  const setFilter = useAppStore((state) => state.setFilterValue);
+  const searchTerm = useAppStore((state) => state.filter);
   const [newApp, setNewApp] = useState({
     name: "",
     description: "",
     active: false,
   });
+
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [paginatedApps, setPaginatedApps] = useState([]);
+  const [pageSize, setPageSize] = useState(20);
+  const [columnWidths, setColumnWidths] = useState({
+    id: 10,
+    name: 15,
+    description: 40,
+    active: 15,
+    actions: 20,
+  });
+
+  const handleResize = (columnName) => (newSize) => {
+    setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
+  };
 
   useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setPaginatedApps(apps.slice(startIndex, endIndex));
-  }, [apps, currentPage, pageSize]);
+    get_apps(currentPage, pageSize);
+  }, [currentPage, pageSize, get_apps]);
 
-  const totalPages = Math.ceil(apps.length / pageSize);
+  useEffect(() => {}, [apps, currentPage, pageSize]);
 
   const handleNewAppChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -135,9 +82,7 @@ export default function AppsPage() {
 
   const handleAddNewApp = (e) => {
     e.preventDefault();
-    const id = apps.length > 0 ? Math.max(...apps.map((app) => app.id)) + 1 : 1;
-    setApps((prev) => [...prev, { id, ...newApp }]);
-    setNewApp({ name: "", description: "", active: false });
+    post_app(newApp, currentPage, pageSize);
   };
 
   const handleEdit = (app) => {
@@ -154,9 +99,7 @@ export default function AppsPage() {
   };
 
   const handleSave = () => {
-    setApps((prev) =>
-      prev.map((app) => (app.id === editingId ? editForm : app)),
-    );
+    patch_app(editForm, currentPage, pageSize);
     setEditingId(null);
   };
 
@@ -172,7 +115,6 @@ export default function AppsPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Apps Management</h1>
-
       {/* Add New App Form */}
       <form
         onSubmit={handleAddNewApp}
@@ -216,134 +158,217 @@ export default function AppsPage() {
           Add App
         </Button>
       </form>
+      {/* Search Input */}
+      <div className="flex space-y-2 flex-col w-full md:flex-row mb-4">
+        <div></div>
+        <div className="w-full md:w-9/12">
+          <Input
+            placeholder="Search features..."
+            value={searchTerm}
+            onChange={(e) => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+      </div>
 
-      {/* Apps Table */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Active</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedApps.map((app) => (
-            <TableRow key={app.id}>
-              <TableCell>{app.id}</TableCell>
-              <TableCell>
-                {editingId === app.id ? (
-                  <Input
-                    name="name"
-                    value={editForm.name}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  app.name
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === app.id ? (
-                  <Input
-                    name="description"
-                    value={editForm.description}
-                    onChange={handleEditChange}
-                  />
-                ) : (
-                  app.description
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === app.id ? (
-                  <Checkbox
-                    className="bg-amber-400"
-                    name="active"
-                    checked={editForm.active}
-                    onCheckedChange={(checked) =>
-                      setEditForm((prev) => ({ ...prev, active: checked }))
-                    }
-                  />
-                ) : (
-                  <Checkbox
-                    className="bg-amber-400"
-                    checked={app.active}
-                    disabled
-                  />
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === app.id ? (
-                  <div className="flex space-x-2">
-                    <Button
-                      className="bg-amber-400"
-                      size="sm"
-                      onClick={handleSave}
-                    >
-                      <Save className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      className="border-amber-400 border-2"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancel}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+      {/* Resizable Attempt */}
+      <div className="w-full">
+        <ResizablePanelGroup direction="horizontal">
+          <div className="w-full">
+            <div className="w-full flex flex-row">
+              <ResizablePanel
+                defaultSize={columnWidths.id}
+                onResize={handleResize("id")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">ID</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.name}
+                onResize={handleResize("name")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Name</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.description}
+                onResize={handleResize("description")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Description</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.active}
+                onResize={handleResize("active")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Active</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.actions}
+                onResize={handleResize("actions")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Actions</div>
+              </ResizablePanel>
+            </div>
+          </div>
+        </ResizablePanelGroup>
+        <div className="w-full">
+          <div className="w-full">
+            {apps.map((app) => (
+              <div className="w-full flex flex-row items-stretch" key={app.id}>
+                <div
+                  style={{ width: `${columnWidths.id}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {app.id}
                   </div>
-                ) : (
-                  <div className="flex space-x-2">
-                    <Button
-                      className="border-amber-400 border-2"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEdit(app)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                </div>
+                {/* <ResizableHandle /> */}
+                <div
+                  style={{ width: `${columnWidths.name}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {editingId === app.id ? (
+                      <Input
+                        name="name"
+                        value={editForm.name}
+                        onChange={handleEditChange}
+                      />
+                    ) : (
+                      app.name
+                    )}
+                  </div>
+                </div>
+                {/* <ResizableHandle /> */}
+                <div
+                  style={{ width: `${columnWidths.description}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {editingId === app.id ? (
+                      <Textarea
+                        name="description"
+                        value={editForm.description}
+                        onChange={handleEditChange}
+                      />
+                    ) : (
+                      app.description
+                    )}
+                  </div>
+                </div>
+                {/* <ResizableHandle /> */}
+                <div
+                  style={{ width: `${columnWidths.active}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {editingId === app.id ? (
+                      <Checkbox
+                        className="bg-amber-400"
+                        name="active"
+                        checked={editForm.active}
+                        onCheckedChange={(checked) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            active: checked,
+                          }))
+                        }
+                      />
+                    ) : (
+                      <Checkbox
+                        className="bg-amber-400"
+                        checked={app.active}
+                        disabled
+                      />
+                    )}
+                  </div>
+                </div>
+                {/* <ResizableHandle /> */}
+                <div
+                  style={{ width: `${columnWidths.actions}%` }}
+                  className="overflow-hidden"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {editingId === app.id ? (
+                      <div className="flex space-x-2">
                         <Button
-                          variant="ghost"
-                          size="sm"
                           className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleSave}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Save className="w-4 h-4" />
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-white border-amber-200">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-amber-800">
-                            Are you sure you want to delete this?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-gray-600">
-                            This action cannot be undone. This will permanently
-                            delete and remove its data from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={null}
-                            className="bg-amber-600 hover:bg-amber-700 text-white"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <Button
+                          className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancel}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <Button
+                          className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(app)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-white border-amber-200">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-amber-800">
+                                Are you sure you want to delete this?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-600">
+                                This action cannot be undone. This will
+                                permanently delete and remove its data from our
+                                servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  delete_app(app.id, currentPage, pageSize);
+                                }}
+                                className="bg-amber-600 hover:bg-amber-700 text-white"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </div>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
         <div className="flex items-center space-x-2">
           <p className="text-sm text-gray-700">Rows per page:</p>
           <Select
@@ -354,7 +379,7 @@ export default function AppsPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[3, 5, 10, 20, 50, 100].map((size) => (
+              {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -367,26 +392,38 @@ export default function AppsPage() {
           {Math.min(currentPage * pageSize, apps.length)} of {apps.length}{" "}
           entries
         </p>
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
             Previous
           </Button>
-          {[...Array(totalPages).keys()].map((page) => (
-            <Button
-              key={page + 1}
-              size="sm"
-              variant={currentPage === page + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(page + 1)}
-            >
-              {page + 1}
-            </Button>
-          ))}
+          {[...Array(totalPages).keys()]
+            .slice(
+              Math.max(0, currentPage - 2),
+              Math.min(totalPages, currentPage + 1),
+            )
+            .map((page) => (
+              <Button
+                key={page + 1}
+                size="sm"
+                variant={currentPage === page + 1 ? "default" : "outline"}
+                onClick={() => setCurrentPage(page + 1)}
+              >
+                {page + 1}
+              </Button>
+            ))}
           <Button
             size="sm"
             variant="outline"
@@ -396,10 +433,19 @@ export default function AppsPage() {
             disabled={currentPage === totalPages}
           >
             Next
-            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
           </Button>
         </div>
       </div>
     </div>
   );
 }
+
+export default AppsPage;

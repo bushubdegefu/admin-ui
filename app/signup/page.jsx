@@ -15,14 +15,17 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import useAuthRedirect from "../utils/useAuthRedirect";
+import { useUserStore } from "../store/user";
 
 export default function AdminSignupForm() {
+  useAuthRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [disabled, setDisabled] = useState(false);
   const [error, setError] = useState(null);
-
+  const post_user = useUserStore((state) => state.postUser);
   const handleSubmit = (e) => {
     e.preventDefault();
     setError(null);
@@ -38,7 +41,8 @@ export default function AdminSignupForm() {
     }
 
     // Here you would typically send the form data to your backend
-    console.log("Form submitted:", { email, password, disabled });
+    post_user({ email, password, disabled }, 1, 1);
+
     // Reset form after submission
     setEmail("");
     setPassword("");

@@ -1,27 +1,49 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle } from "lucide-react";
+import { useLogInStore } from "../store/login";
+import { redirect } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+// import { redirect, usePathname } from "next/navigation";
 
 export default function Component() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
+  const login = useLogInStore((state) => state.setToken);
+  const loggein = useLogInStore((state) => state.blue_admin_token);
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!username || !password) {
       setError("Please fill in all fields");
       return;
     }
-    // Here you would typically handle the login logic
-    console.log("Login attempted with:", { username, password });
-    // Reset error
-    setError("");
-  };
+    login({
+      email: username,
+      password,
+      grant_type: "authorization_code",
+      token: "token",
+    });
+  }
+
+  useEffect(() => {
+    if (loggein) {
+      redirect("/apps");
+    }
+  }, [loggein]);
 
   return (
     <div className="min-h-screen w-full min-w-96 overflow-hidden bg-amber-50 flex items-center justify-center p-4">
@@ -30,8 +52,42 @@ export default function Component() {
           <h2 className="mt-6 text-3xl font-extrabold text-amber-900">
             Blue Admin
           </h2>
+
+          <Button onClick={() => setIsOpen(true)}>
+            Basic Demo Information{" "}
+          </Button>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="text-amber-800 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Important Demo Information
+                </DialogTitle>
+              </DialogHeader>
+              <DialogDescription>
+                <ul className="list-disc pl-5 space-y-2 text-amber-700">
+                  <li>Super user password will reset every hour</li>
+                  <li>You can only delete newly added entries</li>
+                  <li>
+                    The role-based authentication middleware is turned off for
+                    demonstration purposes
+                  </li>
+                  <li>username: superuser@mail.com</li>
+                  <li>password: default@123</li>
+                </ul>
+              </DialogDescription>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  I Understand
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <p className="mt-2 text-sm text-amber-700">
-            Warm and Secure API Management
+            Granular and Secure API Management
           </p>
         </div>
         <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -41,7 +97,7 @@ export default function Component() {
                 htmlFor="username"
                 className="block text-sm font-medium text-amber-800"
               >
-                Username
+                Email
               </Label>
               <div className="mt-1">
                 <Input

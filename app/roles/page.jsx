@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,58 +20,42 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  PlusCircle,
-} from "lucide-react";
+import { ExternalLink, PlusCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
-
-const mockRoles = [
-  {
-    id: 1,
-    name: "Admin",
-    description: "Full access to all features",
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Editor",
-    description: "Can edit and publish content",
-    active: true,
-  },
-  {
-    id: 3,
-    name: "Viewer",
-    description: "Can view but not edit content",
-    active: false,
-  },
-  // Add more mock roles here to test pagination
-];
+import useAuthRedirect from "../utils/useAuthRedirect";
+import { useRoleStore } from "../store/role";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState(mockRoles);
+  useAuthRedirect();
+  const roles = useRoleStore((state) => state.filtered_roles);
+  const get_roles = useRoleStore((state) => state.getRoles);
+  const post_role = useRoleStore((state) => state.postRole);
+  const delete_role = useRoleStore((state) => state.deleteRole);
+  const totalPages = useRoleStore((state) => state.pages);
+  const setFilter = useRoleStore((state) => state.setFilterValue);
+  const searchTerm = useRoleStore((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
   const [newRole, setNewRole] = useState({
     name: "",
     description: "",
     active: false,
   });
 
-  const filteredRoles = roles.filter(
-    (role) =>
-      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const totalPages = Math.ceil(filteredRoles.length / pageSize);
-  const paginatedRoles = filteredRoles.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  useEffect(() => {
+    get_roles(currentPage, pageSize);
+  }, [currentPage, pageSize, get_roles]);
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(Number(newSize));
@@ -80,9 +64,8 @@ export default function RolesPage() {
 
   const handleAddRole = (e) => {
     e.preventDefault();
-    const id = roles.length > 0 ? Math.max(...roles.map((r) => r.id)) + 1 : 1;
-    setRoles([...roles, { id, ...newRole }]);
-    setNewRole({ name: "", description: "", active: false });
+    post_role(newRole);
+    // setNewRole({ name: "", description: "", active: false });
   };
 
   const handleNewRoleChange = (e) => {
@@ -142,13 +125,29 @@ export default function RolesPage() {
       </form>
 
       {/* Search Input */}
-      <div className="mb-4">
-        <Input
-          placeholder="Search roles..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex space-y-2 flex-col w-full md:flex-row mb-4">
+        <div></div>
+        <div className="w-full md:w-9/12">
+          <Input
+            placeholder="Search features..."
+            value={searchTerm}
+            onChange={(e) => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
+        <div className="w-full md:w-3/12 flex justify-start md:justify-end">
+          <Select>
+            <SelectTrigger className="border-amber-300 w-[180px]">
+              <SelectValue placeholder="App" />
+            </SelectTrigger>
+            <SelectContent className="hover:text-black hover:bg-amber-50">
+              <SelectItem value="light">Blue Admin</SelectItem>
+              <SelectItem value="dark">BTM</SelectItem>
+              <SelectItem value="system">Blue Article</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Roles Table */}
@@ -166,7 +165,7 @@ export default function RolesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRoles.map((role) => (
+            {roles.map((role) => (
               <TableRow key={role.id}>
                 <TableCell className="font-medium">{role.id}</TableCell>
                 <TableCell>{role.name}</TableCell>
@@ -181,16 +180,53 @@ export default function RolesPage() {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/roles/${role.id}`} passHref>
-                    <Button
-                      className="border-amber-400 text-amber-800 hover:bg-amber-50"
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Details
-                    </Button>
-                  </Link>
+                  <div className="flex space-x-1">
+                    <Link href={`/roles/${role.id}`} passHref>
+                      <Button
+                        className="border-amber-400 text-amber-800 hover:bg-amber-50"
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Details
+                      </Button>
+                    </Link>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-white border-amber-200">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-amber-800">
+                            Are you sure you want to delete this?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-600">
+                            This action cannot be undone. This will permanently
+                            delete and remove its data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              delete_role(role.id, currentPage, pageSize);
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -210,7 +246,7 @@ export default function RolesPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[2, 5, 10, 20, 50].map((size) => (
+              {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -220,28 +256,41 @@ export default function RolesPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, filteredRoles.length)} of{" "}
-          {filteredRoles.length} entries
+          {Math.min(currentPage * pageSize, roles.length)} of {roles.length}{" "}
+          entries
         </p>
         <div className="flex items-center space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            <ChevronLeft className="h-4 w-4" />
+            Previous
           </Button>
-          {[...Array(totalPages).keys()].map((page) => (
-            <Button
-              key={page + 1}
-              size="sm"
-              variant={currentPage === page + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(page + 1)}
-            >
-              {page + 1}
-            </Button>
-          ))}
+          {[...Array(totalPages).keys()]
+            .slice(
+              Math.max(0, currentPage - 2),
+              Math.min(totalPages, currentPage + 1),
+            )
+            .map((page) => (
+              <Button
+                key={page + 1}
+                size="sm"
+                variant={currentPage === page + 1 ? "default" : "outline"}
+                onClick={() => setCurrentPage(page + 1)}
+              >
+                {page + 1}
+              </Button>
+            ))}
           <Button
             size="sm"
             variant="outline"
@@ -250,7 +299,15 @@ export default function RolesPage() {
             }
             disabled={currentPage === totalPages}
           >
-            <ChevronRight className="h-4 w-4" />
+            Next
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
           </Button>
         </div>
       </div>

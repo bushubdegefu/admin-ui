@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, Edit2, Save, Trash2, PlusCircle } from "lucide-react";
 import Link from "next/link";
+import useAuthRedirect from "../../utils/useAuthRedirect";
 
 // Mock data - in a real application, you'd fetch this data based on the role ID
 const mockRoleDetails = {
@@ -51,6 +52,7 @@ const mockRoleDetails = {
 
 export default function RoleDetailsPage() {
   // const id = params.id;
+  useAuthRedirect();
   const [role, setRole] = useState(mockRoleDetails);
   const [originalRole, setOriginalRole] = useState(mockRoleDetails);
   const [isEditing, setIsEditing] = useState(false);

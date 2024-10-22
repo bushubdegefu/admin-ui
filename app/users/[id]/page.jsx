@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, Edit2, Save, Trash2, PlusCircle } from "lucide-react";
 import Link from "next/link";
+import useAuthRedirect from "../../utils/useAuthRedirect";
 
 // Mock data - in a real application, you'd fetch this data based on the user ID
 const mockUserDetails = {
@@ -45,8 +46,9 @@ const mockUserDetails = {
   ],
 };
 
-export default function UserDetailsPage({ params }) {
+export default function UserDetailsPage() {
   // const id = params.id;
+  useAuthRedirect();
   const [user, setUser] = useState(mockUserDetails);
   const [originalUser, setOriginalUser] = useState(mockUserDetails);
   const [isEditing, setIsEditing] = useState(false);

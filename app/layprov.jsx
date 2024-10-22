@@ -14,57 +14,99 @@ import {
   Zap,
   UserCheck,
   Users,
-  Link,
+  Link as ILink,
   UserPlus,
   Menu,
+  LogOut,
+  LogIn,
+  BookOpen,
 } from "lucide-react";
+import { useLogInStore } from "./store/login";
+import Link from "next/link";
+
+// import useAuthRedirect from "./utils/useAuthRedirect";
 
 const inter = Inter({ subsets: ["latin"] });
 
 const navItems = [
-  { name: "Home", icon: Home, href: "/" },
   { name: "Apps", icon: LayoutGrid, href: "/apps" },
-  { name: "Features", icon: Zap, href: "/features" },
-  { name: "Roles", icon: UserCheck, href: "/roles" },
   { name: "Users", icon: Users, href: "/users" },
-  { name: "Endpoints", icon: Link, href: "/endpoints" },
+  { name: "Roles", icon: UserCheck, href: "/roles" },
+  { name: "Features", icon: Zap, href: "/features" },
+  { name: "Endpoints", icon: ILink, href: "/endpoints" },
+  { name: "Pages", icon: BookOpen, href: "/bluepages" },
 ];
 
 export const LayoutProvider = ({ children }) => {
   const pathname = usePathname();
+  // useAuthRedirect();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const logout = useLogInStore((state) => state.resetTokenLogout);
+  const loggein = useLogInStore((state) => state.blue_admin_token);
 
   const NavItem = ({ item, isMobile }) => {
     return (
-      <a href={item.href}>
+      <Link href={item.href}>
         <Button
           variant="ghost"
           className={`w-full justify-start ${isMobile ? "px-2" : "px-4"} ${
             pathname == item.href ? "bg-amber-200 text-amber-900" : ""
           }`}
-          onClick={() => setSelectedItem(item.name)}
         >
           <item.icon className={`${isMobile ? "mr-2" : "mr-4"} h-4 w-4`} />
           {item.name}
         </Button>
-      </a>
+      </Link>
     );
   };
 
   const NavContent = ({ isMobile }) => (
     <>
-      {navItems.map((item) => (
-        <NavItem key={item.name} item={item} isMobile={isMobile} />
-      ))}
-      <a href="/signup">
+      <Link href="/">
         <Button
-          variant="outline"
-          className={`w-full justify-start ${isMobile ? "mt-4 px-2" : "mt-6 px-4"}`}
+          variant="ghost"
+          className={`w-full justify-start ${isMobile ? "px-2" : "px-4"} ${
+            pathname == "/" ? "bg-amber-200 text-amber-900" : ""
+          }`}
         >
-          <UserPlus className={`${isMobile ? "mr-2" : "mr-4"} h-4 w-4`} />
-          Add User
+          <Home className={`${isMobile ? "mr-2" : "mr-4"} h-4 w-4`} />
+          Home
         </Button>
-      </a>
+      </Link>
+      {!loggein ? (
+        <Link href="/login">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${isMobile ? "px-2" : "px-4"} ${
+              pathname == "/" ? "bg-amber-200 text-amber-900" : ""
+            }`}
+          >
+            <LogIn className={`${isMobile ? "mr-2" : "mr-4"} h-4 w-4`} />
+            Login
+          </Button>
+        </Link>
+      ) : null}
+      {navItems.map((item) =>
+        loggein ? (
+          <NavItem
+            key={"dashboard" + item.name + item.id}
+            item={item}
+            isMobile={isMobile}
+          />
+        ) : null,
+      )}
+      {loggein ? (
+        <Link href="/signup">
+          <Button
+            variant="outline"
+            className={`w-full justify-start ${isMobile ? "mt-4 px-2" : "mt-6 px-4"}`}
+          >
+            <UserPlus className={`${isMobile ? "mr-2" : "mr-4"} h-4 w-4`} />
+            Add User
+          </Button>
+        </Link>
+      ) : null}
     </>
   );
 
@@ -91,6 +133,18 @@ export const LayoutProvider = ({ children }) => {
               <ScrollArea className="flex-1">
                 <nav className="space-y-2 p-4">
                   <NavContent />
+                  {loggein ? (
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start`}
+                      onClick={logout}
+                    >
+                      <LogOut
+                        className={`${false ? "mr-2" : "mr-4"} h-4 w-4`}
+                      />
+                      Logout
+                    </Button>
+                  ) : null}
                 </nav>
               </ScrollArea>
             </aside>

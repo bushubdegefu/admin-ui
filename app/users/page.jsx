@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,100 +20,42 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  PlusCircle,
-} from "lucide-react";
+import { ExternalLink, PlusCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
-
-const mockUsers = [
-  {
-    id: 1,
-    uuid: "6e43a0b3-9b74-4f07-ae2b-1d72e1a15ed9",
-    email: "user1@example.com",
-    disabled: false,
-  },
-  {
-    id: 2,
-    uuid: "eb3f0950-d174-41d7-9c91-20285bc5f4b8",
-    email: "user2@example.com",
-    disabled: true,
-  },
-  {
-    id: 3,
-    uuid: "c5c913e7-0a61-4b7d-8bfc-1bc6a94f2f3d",
-    email: "user3@example.com",
-    disabled: false,
-  },
-  {
-    id: 4,
-    uuid: "e5d7f68b-b733-41ae-9e8b-6c2b8f61c5b1",
-    email: "user4@example.com",
-    disabled: true,
-  },
-  {
-    id: 5,
-    uuid: "56a42e58-1f55-4e12-a98e-6e69a4cda3f7",
-    email: "user5@example.com",
-    disabled: false,
-  },
-  {
-    id: 6,
-    uuid: "b8cde34e-195b-4d99-855c-e74e4e51ed1e",
-    email: "user6@example.com",
-    disabled: true,
-  },
-  {
-    id: 7,
-    uuid: "a4c70aaf-e6f5-4ef5-bd47-61862c4f0a68",
-    email: "user7@example.com",
-    disabled: false,
-  },
-  {
-    id: 8,
-    uuid: "0c26d4e4-f9ae-4f3d-bcf1-3e00b5c77e6c",
-    email: "user8@example.com",
-    disabled: true,
-  },
-  {
-    id: 9,
-    uuid: "e0bc9d7a-b1cb-4b34-bba0-78a764c01e41",
-    email: "user9@example.com",
-    disabled: false,
-  },
-  {
-    id: 10,
-    uuid: "17e6e99b-94b8-4cbb-bcb9-dbb77b5c16ff",
-    email: "user10@example.com",
-    disabled: true,
-  },
-  // Add more mock users here to test pagination
-];
+import useAuthRedirect from "../utils/useAuthRedirect";
+import { useUserStore } from "../store/user";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(mockUsers);
+  useAuthRedirect();
+  const users = useUserStore((state) => state.filtered_users);
+  const get_users = useUserStore((state) => state.getUsers);
+  const post_user = useUserStore((state) => state.postUser);
+  const delete_user = useUserStore((state) => state.deleteUser);
+  const totalPages = useUserStore((state) => state.pages);
+  const setFilter = useUserStore((state) => state.setFilterValue);
+  const searchTerm = useUserStore((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
     disabled: false,
   });
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.uuid.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  useEffect(() => {
+    get_users(currentPage, pageSize);
+  }, [currentPage, pageSize, get_users]);
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(Number(newSize));
@@ -122,9 +64,7 @@ export default function UsersPage() {
 
   const handleAddUser = (e) => {
     e.preventDefault();
-    const id = users.length > 0 ? Math.max(...users.map((r) => r.id)) + 1 : 1;
-    setUsers([...users, { id, ...newUser }]);
-    setNewUser({ name: "", description: "", active: false });
+    post_user(newUser);
   };
 
   const handleNewUserChange = (e) => {
@@ -147,10 +87,10 @@ export default function UsersPage() {
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="new-name">email</Label>
+            <Label htmlFor="new-email">email</Label>
             <Input
-              id="new-name"
-              name="name"
+              id="new-email"
+              name="email"
               value={newUser.email}
               onChange={handleNewUserChange}
               required
@@ -159,8 +99,8 @@ export default function UsersPage() {
           <div>
             <Label htmlFor="new-password">Password</Label>
             <Input
-              id="new-description"
-              name="description"
+              id="new-password"
+              name="password"
               value={newUser.password}
               onChange={handleNewUserChange}
             />
@@ -184,13 +124,16 @@ export default function UsersPage() {
       </form>
 
       {/* Search Input */}
-      <div className="mb-4">
-        <Input
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex space-y-2 flex-col w-full md:flex-row mb-4">
+        <div></div>
+        <div className="w-full md:w-9/12">
+          <Input
+            placeholder="Search features..."
+            value={searchTerm}
+            onChange={(e) => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
       </div>
 
       {/* Users Table */}
@@ -206,7 +149,7 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.map((user) => (
+            {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.uuid}</TableCell>
@@ -221,16 +164,53 @@ export default function UsersPage() {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/users/${user.id}`} passHref>
-                    <Button
-                      className="border-amber-400 text-amber-800 hover:bg-amber-50"
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Details
-                    </Button>
-                  </Link>
+                  <div className="flex space-x-1">
+                    <Link href={`/users/${user.id}`} passHref>
+                      <Button
+                        className="border-amber-400 text-amber-800 hover:bg-amber-50"
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Details
+                      </Button>
+                    </Link>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-white border-amber-200">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-amber-800">
+                            Are you sure you want to delete this?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-600">
+                            This action cannot be undone. This will permanently
+                            delete and remove its data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              delete_user(user.id, currentPage, pageSize);
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -238,7 +218,6 @@ export default function UsersPage() {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
         <div className="flex items-center space-x-2">
           <p className="text-sm text-gray-700">Rows per page:</p>
@@ -250,7 +229,7 @@ export default function UsersPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[2, 5, 10, 20, 50].map((size) => (
+              {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -260,28 +239,41 @@ export default function UsersPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, filteredUsers.length)} of{" "}
-          {filteredUsers.length} entries
+          {Math.min(currentPage * pageSize, users.length)} of {users.length}{" "}
+          entries
         </p>
         <div className="flex items-center space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            <ChevronLeft className="h-4 w-4" />
+            Previous
           </Button>
-          {[...Array(totalPages).keys()].map((page) => (
-            <Button
-              key={page + 1}
-              size="sm"
-              variant={currentPage === page + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(page + 1)}
-            >
-              {page + 1}
-            </Button>
-          ))}
+          {[...Array(totalPages).keys()]
+            .slice(
+              Math.max(0, currentPage - 2),
+              Math.min(totalPages, currentPage + 1),
+            )
+            .map((page) => (
+              <Button
+                key={page + 1}
+                size="sm"
+                variant={currentPage === page + 1 ? "default" : "outline"}
+                onClick={() => setCurrentPage(page + 1)}
+              >
+                {page + 1}
+              </Button>
+            ))}
           <Button
             size="sm"
             variant="outline"
@@ -290,7 +282,15 @@ export default function UsersPage() {
             }
             disabled={currentPage === totalPages}
           >
-            <ChevronRight className="h-4 w-4" />
+            Next
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
           </Button>
         </div>
       </div>

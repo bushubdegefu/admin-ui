@@ -1,16 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -18,55 +10,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, PlusCircle } from "lucide-react";
+import { ExternalLink, PlusCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
+import useAuthRedirect from "../utils/useAuthRedirect";
+import { useFeatureStore } from "../store/feature";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-const mockFeatures = [
-  {
-    id: 1,
-    name: "Feature 1",
-    description: "Description for Feature 1",
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Feature 2",
-    description: "Description for Feature 2",
-    active: false,
-  },
-  {
-    id: 3,
-    name: "Feature 3",
-    description: "Description for Feature 3",
-    active: true,
-  },
-  // Add more mock data as needed
-];
-
-export default function FeaturesPage() {
-  const [features, setFeatures] = useState(mockFeatures);
+function FeaturesPage() {
+  useAuthRedirect();
+  // const [features, setFeatures] = useState(mockFeatures);
+  const features = useFeatureStore((state) => state.filtered_features);
+  const get_features = useFeatureStore((state) => state.getFeatures);
+  const post_feature = useFeatureStore((state) => state.postFeature);
+  const delete_feature = useFeatureStore((state) => state.deleteFeature);
+  const totalPages = useFeatureStore((state) => state.pages);
+  const setFilter = useFeatureStore((state) => state.setFilterValue);
+  const searchTerm = useFeatureStore((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [pageSize, setPageSize] = useState(20);
   const [newFeature, setNewFeature] = useState({
     name: "",
     description: "",
     active: false,
   });
+  const [columnWidths, setColumnWidths] = useState({
+    id: 10,
+    name: 15,
+    description: 40,
+    active: 15,
+    actions: 20,
+  });
 
-  const filteredFeatures = features.filter(
-    (feature) =>
-      feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feature.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const handleResize = (columnName) => (newSize) => {
+    setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
+  };
 
-  const totalPages = Math.ceil(filteredFeatures.length / pageSize);
-  const paginatedFeatures = filteredFeatures.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  useEffect(() => {
+    get_features(currentPage, pageSize);
+  }, [currentPage, pageSize, get_features]);
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(Number(newSize));
@@ -75,10 +74,7 @@ export default function FeaturesPage() {
 
   const handleAddFeature = (e) => {
     e.preventDefault();
-    const id =
-      features.length > 0 ? Math.max(...features.map((f) => f.id)) + 1 : 1;
-    setFeatures([...features, { id, ...newFeature }]);
-    setNewFeature({ name: "", description: "", active: false });
+    post_feature(newFeature, currentPage, pageSize);
   };
 
   const handleNewFeatureChange = (e) => {
@@ -138,60 +134,182 @@ export default function FeaturesPage() {
       </form>
 
       {/* Search Input */}
-      <div className="mb-4">
-        <Input
-          placeholder="Search features..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex space-y-2 flex-col w-full md:flex-row mb-4">
+        <div></div>
+        <div className="w-full md:w-9/12">
+          <Input
+            placeholder="Search features..."
+            value={searchTerm}
+            onChange={(e) => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
+        <div className="w-full  md:w-3/12 flex justify-start md:justify-end">
+          <Select>
+            <SelectTrigger className="border-amber-300  w-[180px]">
+              <SelectValue placeholder="App" />
+            </SelectTrigger>
+            <SelectContent className="hover:text-black hover:bg-amber-50">
+              <SelectItem value="light">Blue Admin</SelectItem>
+              <SelectItem value="dark">BTM</SelectItem>
+              <SelectItem value="system">Blue Article</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Features Table */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Description
-              </TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedFeatures.map((feature) => (
-              <TableRow key={feature.id}>
-                <TableCell className="font-medium">{feature.id}</TableCell>
-                <TableCell>{feature.name}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {feature.description}
-                </TableCell>
-                <TableCell>
-                  <Checkbox
-                    className="bg-amber-400"
-                    checked={feature.active}
-                    disabled
-                  />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Link href={`/features/${feature.id}`} passHref>
-                    <Button
-                      className="border-amber-400 text-amber-800 hover:bg-amber-50"
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Details
-                    </Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
+      {/* Resizable Feature */}
+      <div className="w-full">
+        <ResizablePanelGroup direction="horizontal">
+          <div className="w-full">
+            <div className="w-full flex flex-row">
+              <ResizablePanel
+                defaultSize={columnWidths.id}
+                onResize={handleResize("id")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">ID</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.name}
+                onResize={handleResize("name")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Name</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.description}
+                onResize={handleResize("description")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Description</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.active}
+                onResize={handleResize("active")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Active</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={columnWidths.actions}
+                onResize={handleResize("actions")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Actions</div>
+              </ResizablePanel>
+            </div>
+          </div>
+        </ResizablePanelGroup>
+        <div className="w-full">
+          <div className="w-full">
+            {features.map((feature) => (
+              <div
+                className="w-full flex flex-row items-stretch"
+                key={feature.id}
+              >
+                <div
+                  style={{ width: `${columnWidths.id}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {feature.id}
+                  </div>
+                </div>
+
+                <div
+                  style={{ width: `${columnWidths.name}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2 overflow-hidden break-words">
+                    {feature.name}
+                  </div>
+                </div>
+
+                <div
+                  style={{ width: `${columnWidths.description}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    {feature.description}
+                  </div>
+                </div>
+                <div
+                  style={{ width: `${columnWidths.active}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2 over break-words">
+                    <Checkbox
+                      className="bg-amber-400"
+                      checked={feature.active}
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                <div
+                  style={{ width: `${columnWidths.actions}%` }}
+                  className="overflow-hidden"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2">
+                    <div className="flex space-x-1">
+                      <Link href={`/features/${feature.id}`} passHref>
+                        <Button
+                          className="border-amber-400 text-amber-800 hover:bg-amber-50"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Details
+                        </Button>
+                      </Link>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white border-amber-200">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-amber-800">
+                              Are you sure you want to delete this?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-600">
+                              This action cannot be undone. This will
+                              permanently delete and remove its data from our
+                              servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                delete_feature(
+                                  feature.id,
+                                  currentPage,
+                                  pageSize,
+                                );
+                              }}
+                              className="bg-amber-600 hover:bg-amber-700 text-white"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        </div>
       </div>
 
       {/* Pagination */}
@@ -216,8 +334,8 @@ export default function FeaturesPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, filteredFeatures.length)} of{" "}
-          {filteredFeatures.length} entries
+          {Math.min(currentPage * pageSize, features.length)} of{" "}
+          {features.length} entries
         </p>
         <div className="flex items-center space-x-2">
           <Button
@@ -274,3 +392,5 @@ export default function FeaturesPage() {
     </div>
   );
 }
+
+export default FeaturesPage;
