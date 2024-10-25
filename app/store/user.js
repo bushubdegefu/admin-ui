@@ -75,7 +75,6 @@ export const useUserStore = create((set, get) => ({
       })
       .then(function (response) {
         console.log(response);
-        get().getSingleUser(user_id);
       })
       .catch((response) => {
         const responseError = response?.data?.details
@@ -95,9 +94,7 @@ export const useUserStore = create((set, get) => ({
           "X-APP-TOKEN": token,
         },
       })
-      .then(function () {
-        get().getSingleUser(user_id);
-      })
+      .then(function () {})
       .catch((response) => {
         const responseError = response?.data?.details
           ? response?.data?.details

@@ -7,6 +7,6 @@ import axios from "axios";
 
 // https://goblue-back.onrender.com/api/v1
 export const blueClient = axios.create({
-  baseURL: "/api/v1",
+  baseURL: "https://blue-admin-kat9.onrender.com/api/v1",
   timeout: 10000,
 });
