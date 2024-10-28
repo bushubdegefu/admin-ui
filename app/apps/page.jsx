@@ -12,7 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Edit2, Save, X, Trash2 } from "lucide-react";
+import {
+  PlusCircle,
+  Edit2,
+  Save,
+  X,
+  Trash2,
+  Eye,
+  RotateCcw,
+} from "lucide-react";
 
 import {
   AlertDialog,
@@ -114,7 +122,19 @@ function AppsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Apps Management</h1>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-2xl font-bold mb-4">Apps Management</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button
+            onClick={() => get_apps(currentPage, pageSize)}
+            variant="outline"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       {/* Add New App Form */}
       <form
         onSubmit={handleAddNewApp}
@@ -213,8 +233,8 @@ function AppsPage() {
             </div>
           </div>
         </ResizablePanelGroup>
-        <div className="w-full">
-          <div className="w-full">
+        <div className="w-full overflow-y-hidden">
+          <div className="w-full overflow-y-hidden">
             {apps.map((app) => (
               <div className="w-full flex flex-row items-stretch" key={app.id}>
                 <div
@@ -354,6 +374,32 @@ function AppsPage() {
                               >
                                 Delete
                               </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-white border-amber-200">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-amber-800">
+                                App UUID
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-600">
+                                {app?.uuid}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                                <X className="h-4 w-4" />
+                              </AlertDialogCancel>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

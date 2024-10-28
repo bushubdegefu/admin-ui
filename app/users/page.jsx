@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, PlusCircle, Trash2 } from "lucide-react";
+import { ExternalLink, PlusCircle, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useUserStore } from "../store/user";
@@ -40,7 +40,6 @@ export default function UsersPage() {
   useAuthRedirect();
   const users = useUserStore((state) => state.filtered_users);
   const get_users = useUserStore((state) => state.getUsers);
-  const post_user = useUserStore((state) => state.postUser);
   const delete_user = useUserStore((state) => state.deleteUser);
   const totalPages = useUserStore((state) => state.pages);
   const setFilter = useUserStore((state) => state.setFilterValue);
@@ -62,11 +61,6 @@ export default function UsersPage() {
     setCurrentPage(1);
   };
 
-  const handleAddUser = (e) => {
-    e.preventDefault();
-    post_user(newUser);
-  };
-
   const handleNewUserChange = (e) => {
     const { name, value, type, checked } = e.target;
     setNewUser((prev) => ({
@@ -77,51 +71,19 @@ export default function UsersPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Users</h1>
-
-      {/* Add User Form */}
-      <form
-        onSubmit={handleAddUser}
-        className="mb-8 p-4 bg-amber-50 rounded-lg"
-      >
-        <h2 className="text-xl font-semibold mb-4">Add New User</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="new-email">email</Label>
-            <Input
-              id="new-email"
-              name="email"
-              value={newUser.email}
-              onChange={handleNewUserChange}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="new-password">Password</Label>
-            <Input
-              id="new-password"
-              name="password"
-              value={newUser.password}
-              onChange={handleNewUserChange}
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="new-disabled"
-              name="disabled"
-              checked={newUser.disabled}
-              onCheckedChange={(checked) =>
-                setNewUser((prev) => ({ ...prev, disabled: checked }))
-              }
-            />
-            <Label htmlFor="new-active">Disabled</Label>
-          </div>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-2xl font-bold mb-4">Users</h1>
         </div>
-        <Button type="submit" className="mt-4">
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Add User
-        </Button>
-      </form>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button
+            onClick={() => get_users(currentPage, pageSize)}
+            variant="outline"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Search Input */}
       <div className="flex space-y-2 flex-col w-full md:flex-row mb-4">

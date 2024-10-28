@@ -13,10 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Edit2, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit2, RotateCcw, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../../utils/useAuthRedirect";
 import { useFeatureStore } from "@/app/store/feature";
@@ -28,6 +39,12 @@ export function FeatureDetailsPage({ id }) {
   const feature = useFeatureStore((state) => state.feature);
   const get_feature = useFeatureStore((state) => state.getSingleFeature);
   const patch_feature = useFeatureStore((state) => state.patchFeature);
+  const add_endpoint_feature = useEndPointStore(
+    (state) => state.addEndPointFeature,
+  );
+  const delete_endpoint_feature = useEndPointStore(
+    (state) => state.deleteEndPointFeature,
+  );
   const get_drop_endpoints = useEndPointStore(
     (state) => state.getDropEndPoints,
   );
@@ -43,6 +60,7 @@ export function FeatureDetailsPage({ id }) {
   }, [get_feature, get_drop_endpoints, id]);
 
   const handleEdit = () => {
+    setEditForm(feature);
     setIsEditing(true);
   };
 
@@ -71,16 +89,11 @@ export function FeatureDetailsPage({ id }) {
 
   const handleAddEndpoint = (e) => {
     e.preventDefault();
-
-    console.log(e.target.endpoint.value);
+    add_endpoint_feature(e.target.endpoint.value, id);
   };
 
-  const handleDeleteEndpoint = (id) => {
-    // setFeature((prev) => ({
-    //   ...prev,
-    //   endpoints: prev.endpoints.filter((e) => e.id !== id),
-    // }));
-    console.log(id);
+  const handleDeleteEndpoint = (endpoint_id) => {
+    delete_endpoint_feature(endpoint_id, id);
   };
 
   return (
@@ -91,7 +104,16 @@ export function FeatureDetailsPage({ id }) {
           Back to Features
         </Button>
       </Link>
-      <h1 className="text-3xl font-bold mb-6">Feature Details</h1>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-3xl font-bold mb-6">Feature Details</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button onClick={() => get_feature(id)} variant="outline">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       <Card className="mb-8 overflow-hidden">
         <CardHeader className="bg-amber-50">
@@ -260,13 +282,50 @@ export function FeatureDetailsPage({ id }) {
                   <strong className="text-amber-800">{endpoint.name}</strong>
                   <p className="text-gray-600 text-sm">{endpoint.url}</p>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteEndpoint(endpoint.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div>
+                  {/* <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteEndpoint(endpoint.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button> */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-white border-amber-200">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-amber-800">
+                          Are you sure you want to delete this?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600">
+                          This action cannot be undone. This will permanently
+                          delete and remove its data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            handleDeleteEndpoint(endpoint.id);
+                          }}
+                          className="bg-amber-600 hover:bg-amber-700 text-white"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             ))}
           </div>

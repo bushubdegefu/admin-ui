@@ -104,7 +104,7 @@ export const useEndPointStore = create((set, get) => ({
       })
       .then(function () {
         get().getSingleEndPoint(endpoint_id);
-        update_feature(id);
+        update_feature(id, 1, 1);
       })
       .catch((response) => {
         const responseError = response?.data?.details
@@ -127,7 +127,7 @@ export const useEndPointStore = create((set, get) => ({
       })
       .then(function () {
         get().getSingleEndPoint(endpoint_id);
-        update_feature(id);
+        update_feature(id, 1, 1);
       })
       .catch((response) => {
         const responseError = response?.data?.details
@@ -173,7 +173,7 @@ export const useEndPointStore = create((set, get) => ({
       filtered_endpoints: renderData,
     }));
   },
-  patchEndpoint: async (data) => {
+  patchEndpoint: async (data, page, size) => {
     let token = useLogInStore.getState().access_token;
     await blueClient
       .request({
@@ -196,7 +196,7 @@ export const useEndPointStore = create((set, get) => ({
         console.log(responseError);
       });
   },
-  postEndpoint: async (data) => {
+  postEndpoint: async (data, page, size) => {
     let token = useLogInStore.getState().access_token;
     console.log(data);
     await blueClient
@@ -219,7 +219,7 @@ export const useEndPointStore = create((set, get) => ({
         console.log(responseError);
       });
   },
-  deleteEndpoint: async (id) => {
+  deleteEndpoint: async (id, page, size) => {
     let token = useLogInStore.getState().access_token;
     await blueClient
       .request({

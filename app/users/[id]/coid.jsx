@@ -30,6 +30,7 @@ import {
   Trash2,
   PlusCircle,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../../utils/useAuthRedirect";
@@ -70,9 +71,9 @@ export function UserDetailsPage({ id }) {
 
   const handleSave = () => {
     setIsEditing(false);
+    // Here you would typically send an API request to update the user
     patch_user(editForm, 1, 1);
     get_user(id);
-    // Here you would typically send an API request to update the user
   };
 
   const handleCancel = () => {
@@ -99,7 +100,6 @@ export function UserDetailsPage({ id }) {
   };
 
   const handleDeleteRole = (role_id) => {
-    // console.log(role_id)
     delete_user_role(id, role_id);
     get_user(id);
   };
@@ -127,7 +127,16 @@ export function UserDetailsPage({ id }) {
           Back to Users
         </Button>
       </Link>
-      <h1 className="text-3xl font-bold mb-6">User Details</h1>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-3xl font-bold mb-6">User Details</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button onClick={() => get_user(id)} variant="outline">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       <Card className="mb-8 overflow-hidden">
         <CardHeader className="bg-amber-50">
@@ -268,7 +277,7 @@ export function UserDetailsPage({ id }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {user?.roles.map((role) => (
+                  {user?.roles?.map((role) => (
                     <TableRow key={role.id}>
                       <TableCell>{role.id}</TableCell>
                       <TableCell>{role.name}</TableCell>

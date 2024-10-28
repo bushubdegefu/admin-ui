@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Edit2, Save, X, Trash2 } from "lucide-react";
+import { PlusCircle, Edit2, Save, X, Trash2, RotateCcw } from "lucide-react";
 
 import {
   AlertDialog,
@@ -37,12 +37,16 @@ function EndpointsPage() {
   // const [endpoints, setEndpoints] = useState(mockEndpoint);
   const endpoints = useEndPointStore((state) => state.filtered_endpoints);
   const get_endpoints = useEndPointStore((state) => state.getEndPoints);
+  const post_endpoint = useEndPointStore((state) => state.postEndpoint);
+  const patch_endpoint = useEndPointStore((state) => state.patchEndpoint);
+  const delete_endpoint = useEndPointStore((state) => state.deleteEndpoint);
   const totalPages = useEndPointStore((state) => state.pages);
   const setFilter = useEndPointStore((state) => state.setFilterValue);
   const searchTerm = useEndPointStore((state) => state.filter);
   const [newEndpoint, setNewEndpoint] = useState({
     name: "",
     description: "",
+    method: "",
     route_path: "",
   });
   const [editingId, setEditingId] = useState(null);
@@ -52,9 +56,10 @@ function EndpointsPage() {
   const [columnWidths, setColumnWidths] = useState({
     id: 10,
     name: 15,
-    description: 30,
-    path: 25,
-    actions: 20,
+    method: 15,
+    description: 25,
+    path: 20,
+    actions: 15,
   });
 
   const handleResize = (columnName) => (newSize) => {
@@ -74,13 +79,13 @@ function EndpointsPage() {
 
   const handleAddNewEndpoint = (e) => {
     e.preventDefault();
-    const id = setNewEndpoint({ name: "", description: "", active: false });
-    console.log(id);
+    post_endpoint(newEndpoint, currentPage, pageSize);
   };
 
-  const handleEdit = (endpoint) => {
-    setEditingId(endpoint.id);
-    setEditForm(endpoint);
+  const handleEdit = (id) => {
+    setEditingId(id);
+    let populate = endpoints.filter((endpoint) => endpoint.id == id)[0];
+    setEditForm(populate);
   };
 
   const handleEditChange = (e) => {
@@ -89,10 +94,23 @@ function EndpointsPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    console.log(editForm);
+  };
+  const handleSelect = (value) => {
+    setEditForm((prev) => ({
+      ...prev,
+      method: value,
+    }));
+  };
+  const handleNewSelect = (value) => {
+    setNewEndpoint((prev) => ({
+      ...prev,
+      method: value,
+    }));
   };
 
   const handleSave = () => {
-    console.log(editForm);
+    patch_endpoint(editForm, currentPage, pageSize);
     setEditingId(null);
   };
 
@@ -107,7 +125,19 @@ function EndpointsPage() {
   // console.log(endpoints);
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Endpoints Management</h1>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-2xl font-bold mb-4">Endpoints Management</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button
+            onClick={() => get_endpoints(currentPage, pageSize)}
+            variant="outline"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Add New Endpoint Form */}
       <form
@@ -115,7 +145,7 @@ function EndpointsPage() {
         className="mb-8 p-4 bg-amber-50 rounded-lg"
       >
         <h2 className="text-xl font-semibold mb-4">Add New Endpoint</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="new-name">Name</Label>
             <Input
@@ -134,6 +164,27 @@ function EndpointsPage() {
               value={newEndpoint.description}
               onChange={handleNewEndpointChange}
             />
+          </div>
+          <div>
+            <Label htmlFor="new-Method">Method</Label>
+
+            <Select
+              id="new-method"
+              name="method"
+              value={newEndpoint.method}
+              onValueChange={handleNewSelect}
+            >
+              <SelectTrigger className="">
+                <SelectValue value={newEndpoint.method} placeholder="" />
+              </SelectTrigger>
+              <SelectContent className="hover:text-black hover:bg-amber-50">
+                <SelectItem value="GET">GET</SelectItem>
+                <SelectItem value="POST">POST</SelectItem>
+                <SelectItem value="PUT">PUT</SelectItem>
+                <SelectItem value="PATCH">PATCH</SelectItem>
+                <SelectItem value="DELETE">DELETE</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="new-Path">Path</Label>
@@ -197,6 +248,13 @@ function EndpointsPage() {
               </ResizablePanel>
               <ResizableHandle withHandle />
               <ResizablePanel
+                defaultSize={columnWidths.method}
+                onResize={handleResize("method")}
+              >
+                <div className="w-full px-4 py-1 border-b-2">Method</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel
                 defaultSize={columnWidths.description}
                 onResize={handleResize("description")}
               >
@@ -251,6 +309,33 @@ function EndpointsPage() {
                     )}
                   </div>
                 </div>
+                <div
+                  style={{ width: `${columnWidths.method}%` }}
+                  className="overflow-hidden border-r-2"
+                >
+                  <div className="w-full h-full px-4 py-1 border-b-2 overflow-hidden break-words">
+                    {editingId === endpoint.id ? (
+                      <Select
+                        name="method"
+                        value={editForm.method}
+                        onValueChange={handleSelect}
+                      >
+                        <SelectTrigger className="">
+                          <SelectValue value={editForm.method} placeholder="" />
+                        </SelectTrigger>
+                        <SelectContent className="hover:text-black hover:bg-amber-50">
+                          <SelectItem value="GET">GET</SelectItem>
+                          <SelectItem value="POST">POST</SelectItem>
+                          <SelectItem value="PUT">PUT</SelectItem>
+                          <SelectItem value="PATCH">PATCH</SelectItem>
+                          <SelectItem value="DELETE">DELETE</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      endpoint.method
+                    )}
+                  </div>
+                </div>
 
                 <div
                   style={{ width: `${columnWidths.description}%` }}
@@ -280,7 +365,7 @@ function EndpointsPage() {
                         onChange={handleEditChange}
                       />
                     ) : (
-                      endpoint.route_path
+                      endpoint?.route_path
                     )}
                   </div>
                 </div>
@@ -315,7 +400,7 @@ function EndpointsPage() {
                           className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
                           size="sm"
                           variant="outline"
-                          onClick={() => handleEdit(endpoint)}
+                          onClick={() => handleEdit(endpoint?.id)}
                         >
                           <Edit2 className="w-4 h-4" />
                         </Button>
@@ -346,7 +431,7 @@ function EndpointsPage() {
                               </AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => {
-                                  delete_app(
+                                  delete_endpoint(
                                     endpoint.id,
                                     currentPage,
                                     pageSize,

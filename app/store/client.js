@@ -4,6 +4,8 @@ import axios from "axios";
 // https://goblue-back.onrender.com
 
 // https:blue-admin:3500/api/v1
+// https://blue-admin-kat9.onrender.com/
+// http://localhost:7500/
 
 // https://goblue-back.onrender.com/api/v1
 export const blueClient = axios.create({

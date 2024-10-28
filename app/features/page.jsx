@@ -18,7 +18,7 @@ import {
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, PlusCircle, Trash2 } from "lucide-react";
+import { ExternalLink, PlusCircle, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useFeatureStore } from "../store/feature";
@@ -87,7 +87,19 @@ function FeaturesPage() {
 
   return (
     <div className="container mx-auto p-4 w-full">
-      <h1 className="text-2xl font-bold mb-4">Features</h1>
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-2xl font-bold mb-4">Features</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button
+            onClick={() => get_features(currentPage, pageSize)}
+            variant="outline"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Add Feature Form */}
       <form

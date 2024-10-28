@@ -37,7 +37,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto  px-4 py-12">
         <section className="text-center mb-16">
           <h2 className="text-4xl font-bold text-amber-800 mb-4">
             Streamline Your API Management & IAM

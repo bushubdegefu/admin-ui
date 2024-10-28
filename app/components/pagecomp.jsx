@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAppPageStore } from "../store/pagestore";
 import { useRoleStore } from "../store/role";
 
-export function PageRow({ page, columnWidths }) {
+export function PageRow({ page, columnWidths, currentPage, pageSize }) {
   const [view, setView] = useState(false);
   const patch_page = useAppPageStore((state) => state.patchPage);
   const delete_page = useAppPageStore((state) => state.deletePage);
@@ -224,15 +224,34 @@ export function PageRow({ page, columnWidths }) {
           </div>
         </div>
       </div>
-      <RoleManagement page_id={page.id} page_roles={page.roles} view={view} />
+      <RoleManagement
+        page_id={page.id}
+        page_roles={page.roles}
+        view={view}
+        currentPage={currentPage}
+        pageSize={pageSize}
+      />
     </>
   );
 }
 
-export default function RoleManagement({ page_id, page_roles, roles, view }) {
+export default function RoleManagement({
+  page_id,
+  page_roles,
+  view,
+  currentPage,
+  pageSize,
+}) {
   const [newRole, setNewRole] = useState({ name: "", role: "" });
   const roleOptions = useRoleStore((state) => state.drop_roles);
   const [newRoleOption, setNewRoleOption] = useState(null);
+  const add_page_role = useAppPageStore((state) => state.addPageRole);
+  const get_pages = useAppPageStore((state) => state.getPages);
+  const delete_page_role = useAppPageStore((state) => state.deletePageRole);
+
+  useEffect(() => {
+    console.log(page_roles);
+  });
 
   const handleSelect = (e) => {
     let newValue = roleOptions.filter((role) => role.id == e)[0].name;
@@ -241,16 +260,16 @@ export default function RoleManagement({ page_id, page_roles, roles, view }) {
 
   const handleAddRole = (e) => {
     e.preventDefault();
-    if (newRole.name && newRole.role) {
-      setRoles([...roles, { id: roles.length + 1, ...newRole }]);
-      setNewRole({ name: "", role: "" });
-    }
+    // console.log(parseInt(newRole.role));
+
+    add_page_role(parseInt(newRole.role), page_id, currentPage, pageSize);
+    get_pages(currentPage, pageSize);
   };
 
   const handleDeleteRole = (id) => {
-    console.log(page_id);
-    console.log(page_roles);
-    setRoles(roles.filter((role) => role.id !== id));
+    // console.log(id);
+    delete_page_role(id, page_id, currentPage, pageSize);
+    get_pages(currentPage, pageSize);
   };
 
   return (

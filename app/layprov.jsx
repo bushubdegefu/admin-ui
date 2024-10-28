@@ -169,7 +169,7 @@ export const LayoutProvider = ({ children }) => {
             </header>
 
             {/* Main content area */}
-            <main className="flex-1 p-6 md:p-8 overflow-auto">
+            <main className="flex-1 p-6 md:p-8">
               <div className="md:hidden h-16" />{" "}
               {/* Spacer for mobile header */}
               {children}

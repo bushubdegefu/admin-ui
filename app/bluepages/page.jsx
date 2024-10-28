@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, RotateCcw } from "lucide-react";
 
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useAppPageStore } from "../store/pagestore";
@@ -79,8 +79,20 @@ function AdminPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Pages Management</h1>
+    <div className="container mx-auto  p-4">
+      <div className="w-full flex flex-row items-stretch p-5">
+        <div className=" w-1/2">
+          <h1 className="text-2xl font-bold mb-4">Pages Management</h1>
+        </div>
+        <div className="w-1/2 mb-6 flex flex-col items-end">
+          <Button
+            onClick={() => get_pages(currentPage, pageSize)}
+            variant="outline"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       {/* Add New Page Form */}
       <form
         onSubmit={handleAddNewPage}
@@ -196,174 +208,14 @@ function AdminPage() {
           <div className="w-full">
             {admin_pages.map((page) => (
               <div key={page.id} className="w-full">
-                {/* <div className="w-full flex flex-row items-stretch">
-                  <div
-                    style={{ width: `${columnWidths.id}%` }}
-                    className="overflow-hidden border-r-2"
-                  >
-                    <div className="w-full h-full px-4 py-1 border-b-2">
-                      {page.id}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{ width: `${columnWidths.name}%` }}
-                    className="overflow-hidden border-r-2"
-                  >
-                    <div className="w-full h-full px-4 py-1 border-b-2">
-                      {editingId === page.id ? (
-                        <Input
-                          name="name"
-                          value={editForm.name}
-                          onChange={handleEditChange}
-                        />
-                      ) : (
-                        page.name
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{ width: `${columnWidths.description}%` }}
-                    className="overflow-hidden border-r-2"
-                  >
-                    <div className="w-full h-full px-4 py-1 border-b-2">
-                      {editingId === page.id ? (
-                        <Textarea
-                          name="description"
-                          value={editForm.description}
-                          onChange={handleEditChange}
-                        />
-                      ) : (
-                        page.description
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{ width: `${columnWidths.active}%` }}
-                    className="overflow-hidden border-r-2"
-                  >
-                    <div className="w-full h-full px-4 py-1 border-b-2">
-                      {editingId === page.id ? (
-                        <Checkbox
-                          className="bg-amber-400"
-                          name="active"
-                          checked={editForm.active}
-                          onCheckedChange={(checked) =>
-                            setEditForm((prev) => ({
-                              ...prev,
-                              active: checked,
-                            }))
-                          }
-                        />
-                      ) : (
-                        <Checkbox
-                          className="bg-amber-400"
-                          checked={page.active}
-                          disabled
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{ width: `${columnWidths.actions}%` }}
-                    className="overflow-hidden"
-                  >
-                    <div className="w-full h-full px-4 py-1 border-b-2">
-                      {editingId === page.id ? (
-                        <div className="flex space-x-2">
-                          <Button
-                            className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleSave}
-                          >
-                            <Save className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleCancel}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
-                            size="sm"
-                            variant="outline"
-                            onClick={null}
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex space-x-2">
-                          <Button
-                            className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(page)}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-white border-amber-200">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-amber-800">
-                                  Are you sure you want to delete this?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-gray-600">
-                                  This action cannot be undone. This will
-                                  permanently delete and remove its data from
-                                  our servers.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="border-amber-200 text-amber-800 hover:bg-amber-50">
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    delete_page(page.id, currentPage, pageSize);
-                                  }}
-                                  className="bg-amber-600 hover:bg-amber-700 text-white"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                          <Button
-                            className="text-amber-600 hover:text-amber-100 hover:bg-amber-800"
-                            size="sm"
-                            variant="outline"
-                            onClick={null}
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div> */}
                 <PageRow
                   key={"pid" + page.id}
                   page={page}
                   columnWidths={columnWidths}
                   page_roles={page?.roles}
                   roles={null}
+                  currentPage={currentPage}
+                  pageSize={pageSize}
                 />
               </div>
             ))}
