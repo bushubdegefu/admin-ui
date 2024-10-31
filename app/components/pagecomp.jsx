@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import { useAppPageStore } from "../store/pagestore";
 import { useRoleStore } from "../store/role";
 
 export function PageRow({ page, columnWidths, currentPage, pageSize }) {
+  const { toast } = useToast();
   const [view, setView] = useState(false);
   const patch_page = useAppPageStore((state) => state.patchPage);
   const delete_page = useAppPageStore((state) => state.deletePage);
@@ -248,10 +250,6 @@ export default function RoleManagement({
   const add_page_role = useAppPageStore((state) => state.addPageRole);
   const get_pages = useAppPageStore((state) => state.getPages);
   const delete_page_role = useAppPageStore((state) => state.deletePageRole);
-
-  useEffect(() => {
-    console.log(page_roles);
-  });
 
   const handleSelect = (e) => {
     let newValue = roleOptions.filter((role) => role.id == e)[0].name;

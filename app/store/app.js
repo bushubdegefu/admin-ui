@@ -15,6 +15,7 @@ export const useAppStore = create((set, get) => ({
   page: 1,
   size: 15,
   filtered_apps: [],
+  status: null,
   getApps: async (page, size) => {
     let token = useLogInStore.getState().access_token;
     await blueClient
@@ -33,12 +34,11 @@ export const useAppStore = create((set, get) => ({
           filtered_apps: response?.data?.data,
           total: response?.data?.total,
           pages: response?.data?.pages,
+          status: response?.status,
         }));
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
   },
@@ -61,9 +61,7 @@ export const useAppStore = create((set, get) => ({
         }));
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
   },
@@ -83,15 +81,13 @@ export const useAppStore = create((set, get) => ({
         set((state) => ({
           ...state,
           app: response?.data?.data,
+          status: response?.status,
         }));
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
   getAppMatrix: async (app_id) => {
     let token = useLogInStore.getState().access_token;
@@ -109,15 +105,17 @@ export const useAppStore = create((set, get) => ({
         set((state) => ({
           ...state,
           app_matrix: response?.data?.data,
+          status: response?.status,
         }));
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
   setFilterValue: (value) => {
     set((state) => ({
@@ -167,17 +165,22 @@ export const useAppStore = create((set, get) => ({
         },
         data: data,
       })
-      .then(function () {
+      .then(function (response) {
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
         get().getSingleApp(data?.id);
         get().getApps(page, size);
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
+        const responseError = response?.response?.data?.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
   postApp: async (data, page, size) => {
     let token = useLogInStore.getState().access_token;
@@ -191,17 +194,23 @@ export const useAppStore = create((set, get) => ({
         },
         data: data,
       })
-      .then(function () {
+      .then(function (response) {
+        console.log(response.status);
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
         get().getApps(page, size);
       })
       .catch((response) => {
-        console.log(response);
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
+        console.log(response?.response?.data?.details);
+        const responseError = response?.response?.data?.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
   deleteApp: async (id, page, size) => {
     let token = useLogInStore.getState().access_token;
@@ -214,16 +223,21 @@ export const useAppStore = create((set, get) => ({
           "X-APP-TOKEN": token,
         },
       })
-      .then(function () {
+      .then(function (response) {
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
         get().getApps(page, size);
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
   activateDeactivate: async (id, status) => {
     let token = useLogInStore.getState().access_token;
@@ -238,16 +252,20 @@ export const useAppStore = create((set, get) => ({
         },
       })
       .then(function (response) {
-        console.log(response);
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
         get().getApps();
         get().getSingleApp(id);
       })
       .catch((response) => {
-        const responseError = response?.data?.details
-          ? response?.data?.details
-          : "Something Went Wrong, Try again";
+        set((state) => ({
+          ...state,
+          status: response?.status,
+        }));
+        const responseError = response.response.data.details;
         console.log(responseError);
       });
-    console.log(responseError);
   },
 }));

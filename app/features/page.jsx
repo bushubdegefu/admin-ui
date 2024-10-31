@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ import { ExternalLink, PlusCircle, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useFeatureStore } from "../store/feature";
+import { useAppStore } from "../store/app";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,9 +38,11 @@ import {
 
 function FeaturesPage() {
   useAuthRedirect();
+  const { toast } = useToast();
   // const [features, setFeatures] = useState(mockFeatures);
   const features = useFeatureStore((state) => state.filtered_features);
   const get_features = useFeatureStore((state) => state.getFeatures);
+  const get_app_features = useFeatureStore((state) => state.getAppFeatures);
   const post_feature = useFeatureStore((state) => state.postFeature);
   const delete_feature = useFeatureStore((state) => state.deleteFeature);
   const totalPages = useFeatureStore((state) => state.pages);
@@ -58,10 +62,28 @@ function FeaturesPage() {
     active: 15,
     actions: 20,
   });
+  const drop_apps = useAppStore((state) => state.drop_apps);
+  const get_drop_apps = useAppStore((state) => state.getDropApps);
+  const [currentApp, setCurrentApp] = useState(null);
+  const pagination = features?.length ? features?.length : 1;
+
+  const handleAppSelect = (value) => {
+    setCurrentApp(value);
+    if (value != 0) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == value)[0];
+      get_app_features(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_features(currentPage, pageSize);
+    }
+  };
 
   const handleResize = (columnName) => (newSize) => {
     setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
   };
+
+  useEffect(() => {
+    get_drop_apps();
+  }, [get_drop_apps]);
 
   useEffect(() => {
     get_features(currentPage, pageSize);
@@ -158,14 +180,23 @@ function FeaturesPage() {
         </div>
 
         <div className="w-full  md:w-3/12 flex justify-start md:justify-end">
-          <Select>
-            <SelectTrigger className="border-amber-300  w-[180px]">
-              <SelectValue placeholder="App" />
+          <Select name="current_app" onValueChange={handleAppSelect}>
+            <SelectTrigger className="border-amber-300 w-[180px]">
+              <SelectValue value={currentApp} placeholder="App" />
             </SelectTrigger>
             <SelectContent className="hover:text-black hover:bg-amber-50">
-              <SelectItem value="light">Blue Admin</SelectItem>
-              <SelectItem value="dark">BTM</SelectItem>
-              <SelectItem value="system">Blue Article</SelectItem>
+              <SelectItem className="text-black" value={0}>
+                All
+              </SelectItem>
+              {drop_apps?.map((app) => (
+                <SelectItem
+                  className="text-black"
+                  key={"dapnew" + app?.id}
+                  value={app?.id}
+                >
+                  {app?.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -215,7 +246,7 @@ function FeaturesPage() {
         </ResizablePanelGroup>
         <div className="w-full">
           <div className="w-full">
-            {features.map((feature) => (
+            {features?.map((feature) => (
               <div
                 className="w-full flex flex-row items-stretch"
                 key={feature.id}
@@ -346,8 +377,7 @@ function FeaturesPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, features.length)} of{" "}
-          {features.length} entries
+          {Math.min(currentPage * pageSize, pagination)} of {pagination} entries
         </p>
         <div className="flex items-center space-x-2">
           <Button

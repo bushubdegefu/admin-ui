@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Select,
@@ -44,7 +45,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 function AppsPage() {
   useAuthRedirect();
+  const { toast } = useToast();
   const apps = useAppStore((state) => state.filtered_apps);
+  const status = useAppStore((state) => state.status);
   const get_apps = useAppStore((state) => state.getApps);
   const patch_app = useAppStore((state) => state.patchApp);
   const post_app = useAppStore((state) => state.postApp);
@@ -91,6 +94,18 @@ function AppsPage() {
   const handleAddNewApp = (e) => {
     e.preventDefault();
     post_app(newApp, currentPage, pageSize);
+
+    if (parseInt(status) < 300 && parseInt(status) >= 200) {
+      toast({
+        title: "Item Created",
+        description: `Item has been created.`,
+      });
+    } else {
+      toast({
+        title: "Creation Failed",
+        description: `Kindly Check with system Owners`,
+      });
+    }
   };
 
   const handleEdit = (app) => {
@@ -108,6 +123,17 @@ function AppsPage() {
 
   const handleSave = () => {
     patch_app(editForm, currentPage, pageSize);
+    if (parseInt(status) < 300 && parseInt(status) >= 200) {
+      toast({
+        title: "Item Updated",
+        description: `Item has been updated.`,
+      });
+    } else {
+      toast({
+        title: "Update Failed",
+        description: `Kindly Check with System Owners`,
+      });
+    }
     setEditingId(null);
   };
 
@@ -369,6 +395,22 @@ function AppsPage() {
                               <AlertDialogAction
                                 onClick={() => {
                                   delete_app(app.id, currentPage, pageSize);
+                                  if (
+                                    parseInt(status) < 300 &&
+                                    parseInt(status) >= 200
+                                  ) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Item Deleted",
+                                      description: `Item with ID ${app.id} has been removed.`,
+                                    });
+                                  } else {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Removing Failed",
+                                      description: `Item with ID ${app.id} was not removed`,
+                                    });
+                                  }
                                 }}
                                 className="bg-amber-600 hover:bg-amber-700 text-white"
                               >

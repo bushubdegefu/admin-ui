@@ -13,10 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlusCircle, RotateCcw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useAppPageStore } from "../store/pagestore";
 import { useRoleStore } from "../store/role";
+import { useAppStore } from "../store/app";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -25,9 +27,15 @@ import {
 
 function AdminPage() {
   useAuthRedirect();
+  const { toast } = useToast();
   const admin_pages = useAppPageStore((state) => state.filtered_pages);
   const get_pages = useAppPageStore((state) => state.getPages);
+  const get_app_pages = useAppPageStore((state) => state.getAppPages);
   const post_page = useAppPageStore((state) => state.postPage);
+  const drop_apps = useAppStore((state) => state.drop_apps);
+  const get_drop_apps = useAppStore((state) => state.getDropApps);
+  const [currentApp, setCurrentApp] = useState(null);
+  const pagination = admin_pages?.length ? admin_pages?.length : 1;
   const totalPages = useAppPageStore((state) => state.pages);
   const drop_roles = useRoleStore((state) => state.getDropRoles);
   const setFilter = useAppPageStore((state) => state.setFilterValue);
@@ -51,6 +59,20 @@ function AdminPage() {
 
   const handleResize = (columnName) => (newSize) => {
     setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
+  };
+
+  useEffect(() => {
+    get_drop_apps();
+  }, [get_drop_apps]);
+
+  const handleAppSelect = (value) => {
+    setCurrentApp(value);
+    if (value != 0) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == value)[0];
+      get_app_pages(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_pages(currentPage, pageSize);
+    }
   };
 
   useEffect(() => {
@@ -149,14 +171,23 @@ function AdminPage() {
         </div>
 
         <div className="w-full  md:w-3/12 flex justify-start md:justify-end">
-          <Select>
-            <SelectTrigger className="border-amber-300  w-[180px]">
-              <SelectValue placeholder="App" />
+          <Select name="current_app" onValueChange={handleAppSelect}>
+            <SelectTrigger className="border-amber-300 w-[180px]">
+              <SelectValue value={currentApp} placeholder="App" />
             </SelectTrigger>
             <SelectContent className="hover:text-black hover:bg-amber-50">
-              <SelectItem value="light">Blue Admin</SelectItem>
-              <SelectItem value="dark">BTM</SelectItem>
-              <SelectItem value="system">Blue Article</SelectItem>
+              <SelectItem className="text-black" value={0}>
+                All
+              </SelectItem>
+              {drop_apps?.map((app) => (
+                <SelectItem
+                  className="text-black"
+                  key={"dapnew" + app?.id}
+                  value={app?.id}
+                >
+                  {app?.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -206,7 +237,7 @@ function AdminPage() {
         </ResizablePanelGroup>
         <div className="w-full">
           <div className="w-full">
-            {admin_pages.map((page) => (
+            {admin_pages?.map((page) => (
               <div key={page.id} className="w-full">
                 <PageRow
                   key={"pid" + page.id}
@@ -245,8 +276,7 @@ function AdminPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, admin_pages.length)} of{" "}
-          {admin_pages.length} entries
+          {Math.min(currentPage * pageSize, pagination)} of {pagination} entries
         </p>
         <div className="flex items-center space-x-2">
           <Button

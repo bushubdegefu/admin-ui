@@ -9,6 +9,6 @@ import axios from "axios";
 
 // https://goblue-back.onrender.com/api/v1
 export const blueClient = axios.create({
-  baseURL: "https://blue-admin-kat9.onrender.com/api/v1",
+  baseURL: "http://localhost:7500/api/v1",
   timeout: 10000,
 });

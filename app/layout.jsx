@@ -1,5 +1,5 @@
 import "./globals.css";
-import React from "react";
+
 import { LayoutProvider } from "./layprov";
 
 export const metadata = {

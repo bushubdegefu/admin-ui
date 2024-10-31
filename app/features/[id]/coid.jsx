@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -35,7 +36,7 @@ import { useEndPointStore } from "@/app/store/endpoint";
 
 export function FeatureDetailsPage({ id }) {
   useAuthRedirect();
-
+  const { toast } = useToast();
   const feature = useFeatureStore((state) => state.feature);
   const get_feature = useFeatureStore((state) => state.getSingleFeature);
   const patch_feature = useFeatureStore((state) => state.patchFeature);

@@ -24,6 +24,8 @@ import { ExternalLink, PlusCircle, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { useRoleStore } from "../store/role";
+import { useAppStore } from "../store/app";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,10 +40,16 @@ import {
 
 export default function RolesPage() {
   useAuthRedirect();
+  const { toast } = useToast();
   const roles = useRoleStore((state) => state.filtered_roles);
   const get_roles = useRoleStore((state) => state.getRoles);
+  const get_app_roles = useRoleStore((state) => state.getAppRoles);
   const post_role = useRoleStore((state) => state.postRole);
   const delete_role = useRoleStore((state) => state.deleteRole);
+  const drop_apps = useAppStore((state) => state.drop_apps);
+  const get_drop_apps = useAppStore((state) => state.getDropApps);
+  const [currentApp, setCurrentApp] = useState(null);
+  const pagination = roles?.length ? roles?.length : 1;
   const totalPages = useRoleStore((state) => state.pages);
   const setFilter = useRoleStore((state) => state.setFilterValue);
   const searchTerm = useRoleStore((state) => state.filter);
@@ -54,8 +62,22 @@ export default function RolesPage() {
   });
 
   useEffect(() => {
+    get_drop_apps();
+  }, [get_drop_apps]);
+
+  useEffect(() => {
     get_roles(currentPage, pageSize);
   }, [currentPage, pageSize, get_roles]);
+
+  const handleAppSelect = (value) => {
+    setCurrentApp(value);
+    if (value != 0) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == value)[0];
+      get_app_roles(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_roles(currentPage, pageSize);
+    }
+  };
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(Number(newSize));
@@ -149,14 +171,23 @@ export default function RolesPage() {
         </div>
 
         <div className="w-full md:w-3/12 flex justify-start md:justify-end">
-          <Select>
+          <Select name="current_app" onValueChange={handleAppSelect}>
             <SelectTrigger className="border-amber-300 w-[180px]">
-              <SelectValue placeholder="App" />
+              <SelectValue value={currentApp} placeholder="App" />
             </SelectTrigger>
             <SelectContent className="hover:text-black hover:bg-amber-50">
-              <SelectItem value="light">Blue Admin</SelectItem>
-              <SelectItem value="dark">BTM</SelectItem>
-              <SelectItem value="system">Blue Article</SelectItem>
+              <SelectItem className="text-black" value={0}>
+                All
+              </SelectItem>
+              {drop_apps?.map((app) => (
+                <SelectItem
+                  className="text-black"
+                  key={"dapnew" + app?.id}
+                  value={app?.id}
+                >
+                  {app?.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -177,7 +208,7 @@ export default function RolesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles.map((role) => (
+            {roles?.map((role) => (
               <TableRow key={role.id}>
                 <TableCell className="font-medium">{role.id}</TableCell>
                 <TableCell>{role.name}</TableCell>
@@ -268,8 +299,7 @@ export default function RolesPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, roles.length)} of {roles.length}{" "}
-          entries
+          {Math.min(currentPage * pageSize, pagination)} of {pagination} entries
         </p>
         <div className="flex items-center space-x-2">
           <Button

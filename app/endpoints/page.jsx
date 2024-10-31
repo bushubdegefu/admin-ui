@@ -31,12 +31,16 @@ import {
 import useAuthRedirect from "../utils/useAuthRedirect";
 import { Textarea } from "@/components/ui/textarea";
 import { useEndPointStore } from "../store/endpoint";
+import { useAppStore } from "../store/app";
+import { useToast } from "@/hooks/use-toast";
 
 function EndpointsPage() {
   useAuthRedirect();
+  const { toast } = useToast();
   // const [endpoints, setEndpoints] = useState(mockEndpoint);
   const endpoints = useEndPointStore((state) => state.filtered_endpoints);
   const get_endpoints = useEndPointStore((state) => state.getEndPoints);
+  const get_app_endpoints = useEndPointStore((state) => state.getAppEndPoints);
   const post_endpoint = useEndPointStore((state) => state.postEndpoint);
   const patch_endpoint = useEndPointStore((state) => state.patchEndpoint);
   const delete_endpoint = useEndPointStore((state) => state.deleteEndpoint);
@@ -62,12 +66,21 @@ function EndpointsPage() {
     actions: 15,
   });
 
+  const drop_apps = useAppStore((state) => state.drop_apps);
+  const get_drop_apps = useAppStore((state) => state.getDropApps);
+  const [currentApp, setCurrentApp] = useState(null);
+  const pagination = endpoints?.length ? endpoints?.length : 1;
+
   const handleResize = (columnName) => (newSize) => {
     setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
   };
   useEffect(() => {
     get_endpoints(currentPage, pageSize);
   }, [currentPage, pageSize, get_endpoints]);
+
+  useEffect(() => {
+    get_drop_apps();
+  }, [get_drop_apps]);
 
   const handleNewEndpointChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -77,6 +90,15 @@ function EndpointsPage() {
     }));
   };
 
+  const handleAppSelect = (value) => {
+    setCurrentApp(value);
+    if (value != 0) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == value)[0];
+      get_app_endpoints(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_endpoints(currentPage, pageSize);
+    }
+  };
   const handleAddNewEndpoint = (e) => {
     e.preventDefault();
     post_endpoint(newEndpoint, currentPage, pageSize);
@@ -215,14 +237,23 @@ function EndpointsPage() {
         </div>
 
         <div className="w-full md:w-3/12 flex justify-start md:justify-end">
-          <Select>
+          <Select name="current_app" onValueChange={handleAppSelect}>
             <SelectTrigger className="border-amber-300 w-[180px]">
-              <SelectValue placeholder="App" />
+              <SelectValue value={currentApp} placeholder="App" />
             </SelectTrigger>
             <SelectContent className="hover:text-black hover:bg-amber-50">
-              <SelectItem value="light">Blue Admin</SelectItem>
-              <SelectItem value="dark">BTM</SelectItem>
-              <SelectItem value="system">Blue Article</SelectItem>
+              <SelectItem className="text-black" value={0}>
+                All
+              </SelectItem>
+              {drop_apps?.map((app) => (
+                <SelectItem
+                  className="text-black"
+                  key={"dapnew" + app?.id}
+                  value={app?.id}
+                >
+                  {app?.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -279,7 +310,7 @@ function EndpointsPage() {
         </ResizablePanelGroup>
         <div className="w-full">
           <div className="w-full">
-            {endpoints.map((endpoint) => (
+            {endpoints?.map((endpoint) => (
               <div
                 className="w-full flex flex-row items-stretch"
                 key={endpoint.id}
@@ -476,8 +507,7 @@ function EndpointsPage() {
         </div>
         <p className="text-sm text-gray-700">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
-          {Math.min(currentPage * pageSize, endpoints.length)} of{" "}
-          {endpoints.length} entries
+          {Math.min(currentPage * pageSize, pagination)} of {pagination} entries
         </p>
         <div className="flex items-center space-x-2">
           <Button

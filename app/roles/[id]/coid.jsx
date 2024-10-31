@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -53,6 +54,7 @@ import { useFeatureStore } from "@/app/store/feature";
 
 export function RoleDetailsPage({ id }) {
   useAuthRedirect();
+  const { toast } = useToast();
   const role = useRoleStore((state) => state.role);
   const get_role = useRoleStore((state) => state.getSingleRole);
   const [editForm, setEditForm] = useState(role);
@@ -90,7 +92,7 @@ export function RoleDetailsPage({ id }) {
   ]);
 
   useEffect(() => {
-    let cur_app = drop_apps.filter((dapp) => dapp.id == role.app.Int64)[0];
+    let cur_app = drop_apps.filter((dapp) => dapp.id == role?.app?.Int64)[0];
     setCurrentApp(cur_app);
   }, [role, drop_apps]);
 

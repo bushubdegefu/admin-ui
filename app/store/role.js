@@ -43,6 +43,34 @@ export const useRoleStore = create((set, get) => ({
         console.log(responseError);
       });
   },
+  getAppRoles: async (uuid, page, size) => {
+    let token = useLogInStore.getState().access_token;
+    await blueClient
+      .request({
+        method: "GET",
+        url: `/approleuuid/${uuid}?page=${page}&size=${size}`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-APP-TOKEN": token,
+        },
+      })
+      .then(function (response) {
+        set((state) => ({
+          ...state,
+          roles: response?.data?.data,
+          filtered_roles: response?.data?.data,
+          total: response?.data?.total,
+          pages: response?.data?.pages,
+        }));
+      })
+      .catch((response) => {
+        // console.log(response)
+        const responseError = response?.data?.details
+          ? response?.data?.details
+          : "Something Went Wrong, Try again";
+        console.log(responseError);
+      });
+  },
   getDropRoles: async () => {
     let token = useLogInStore.getState().access_token;
     await blueClient

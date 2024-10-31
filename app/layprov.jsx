@@ -1,7 +1,7 @@
 "use client";
 
 // Use usePathname for catching route name.
-import React, { useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
@@ -20,9 +20,12 @@ import {
   LogOut,
   LogIn,
   BookOpen,
+  TorusIcon,
 } from "lucide-react";
+import { Toaster } from "@/components/ui/toaster";
 import { useLogInStore } from "./store/login";
 import Link from "next/link";
+import { Toast } from "@radix-ui/react-toast";
 
 // import useAuthRedirect from "./utils/useAuthRedirect";
 
@@ -44,6 +47,15 @@ export const LayoutProvider = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const logout = useLogInStore((state) => state.resetTokenLogout);
   const loggein = useLogInStore((state) => state.blue_admin_token);
+  const reftoken = useLogInStore((state) => state.refToken);
+
+  useEffect(() => {
+    // Set interval to run reftoken every 59 minutes (3,540,000 milliseconds)
+    const interval = setInterval(reftoken, 3540000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [reftoken]);
 
   const NavItem = ({ item, isMobile }) => {
     return (
@@ -169,10 +181,12 @@ export const LayoutProvider = ({ children }) => {
             </header>
 
             {/* Main content area */}
+
             <main className="flex-1 p-6 md:p-8">
               <div className="md:hidden h-16" />{" "}
               {/* Spacer for mobile header */}
               {children}
+              <Toaster />
             </main>
           </div>
         </body>

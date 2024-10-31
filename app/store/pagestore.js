@@ -40,6 +40,33 @@ export const useAppPageStore = create((set, get) => ({
         console.log(responseError);
       });
   },
+  getAppPages: async (uuid, page_num, size) => {
+    let token = useLogInStore.getState(page_num, size).access_token;
+    await blueClient
+      .request({
+        method: "GET",
+        url: `/apppagesuuid/${uuid}?page=${page_num}&size=${size}`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-APP-TOKEN": token,
+        },
+      })
+      .then(function (response) {
+        set((state) => ({
+          ...state,
+          pages_list: response?.data?.data,
+          filtered_pages: response?.data?.data,
+          total: response?.data?.total,
+          pages: response?.data?.pages,
+        }));
+      })
+      .catch((response) => {
+        const responseError = response?.data?.details
+          ? response?.data?.details
+          : "Something Went Wrong, Try again";
+        console.log(responseError);
+      });
+  },
   getDropPages: async () => {
     let token = useLogInStore.getState().access_token;
 

@@ -41,6 +41,33 @@ export const useFeatureStore = create((set, get) => ({
         console.log(responseError);
       });
   },
+  getAppFeatures: async (uuid, page, size) => {
+    let token = useLogInStore.getState().access_token;
+    await blueClient
+      .request({
+        method: "GET",
+        url: `/appfeatureuuid/${uuid}?page=${page}&size=${size}`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-APP-TOKEN": token,
+        },
+      })
+      .then(function (response) {
+        set((state) => ({
+          ...state,
+          features: response?.data?.data,
+          filtered_features: response?.data?.data,
+          total: response?.data?.total,
+          pages: response?.data?.pages,
+        }));
+      })
+      .catch((response) => {
+        const responseError = response?.data?.details
+          ? response?.data?.details
+          : "Something Went Wrong, Try again";
+        console.log(responseError);
+      });
+  },
   getDropFeatures: async () => {
     let token = useLogInStore.getState().access_token;
 
