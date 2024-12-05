@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useUtilStore } from "../store/utilstore";
 
 export default function UsersPage() {
   useAuthRedirect();
@@ -45,7 +46,8 @@ export default function UsersPage() {
   const setFilter = useUserStore((state) => state.setFilterValue);
   const searchTerm = useUserStore((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = useUtilStore((state) => state.size);
+  const setPageSize = useUtilStore((state) => state.setSize);
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -191,7 +193,7 @@ export default function UsersPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
+              {[5, 15, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -213,14 +215,7 @@ export default function UsersPage() {
           >
             First
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
+
           {[...Array(totalPages).keys()]
             .slice(
               Math.max(0, currentPage - 2),
@@ -236,16 +231,6 @@ export default function UsersPage() {
                 {page + 1}
               </Button>
             ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
           <Button
             size="sm"
             variant="outline"

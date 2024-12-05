@@ -90,9 +90,7 @@ export const useFeatureStore = create((set, get) => ({
         const responseError = response?.data?.details
           ? response?.data?.details
           : "Something Went Wrong, Try again";
-        toast.error(responseError, {
-          position: "top-right",
-        });
+        console.log(responseError);
       });
   },
   getSingleFeature: async (id) => {

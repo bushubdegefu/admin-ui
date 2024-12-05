@@ -42,6 +42,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
+import { useUtilStore } from "../store/utilstore";
 
 function AppsPage() {
   useAuthRedirect();
@@ -64,7 +65,8 @@ function AppsPage() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const pageSize = useUtilStore((state) => state.size);
+  const setPageSize = useUtilStore((state) => state.setSize);
   const [columnWidths, setColumnWidths] = useState({
     id: 10,
     name: 15,
@@ -489,14 +491,7 @@ function AppsPage() {
           >
             First
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
+
           {[...Array(totalPages).keys()]
             .slice(
               Math.max(0, currentPage - 2),
@@ -512,16 +507,7 @@ function AppsPage() {
                 {page + 1}
               </Button>
             ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
+
           <Button
             size="sm"
             variant="outline"

@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useUtilStore } from "../store/utilstore";
 
 export default function RolesPage() {
   useAuthRedirect();
@@ -53,8 +54,10 @@ export default function RolesPage() {
   const totalPages = useRoleStore((state) => state.pages);
   const setFilter = useRoleStore((state) => state.setFilterValue);
   const searchTerm = useRoleStore((state) => state.filter);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const currentPage = useUtilStore((state) => state.page);
+  const setCurrentPage = useUtilStore((state) => state.setPage);
+  const pageSize = useUtilStore((state) => state.size);
+  const setPageSize = useUtilStore((state) => state.setSize);
   const [newRole, setNewRole] = useState({
     name: "",
     description: "",
@@ -79,6 +82,15 @@ export default function RolesPage() {
     }
   };
 
+  const refresh = () => {
+    if (currentApp != null) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == currentApp)[0];
+      get_app_roles(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_roles(currentPage, pageSize);
+    }
+  };
+
   const handlePageSizeChange = (newSize) => {
     setPageSize(Number(newSize));
     setCurrentPage(1);
@@ -87,7 +99,8 @@ export default function RolesPage() {
   const handleAddRole = (e) => {
     e.preventDefault();
     post_role(newRole);
-    // setNewRole({ name: "", description: "", active: false });
+    setNewRole({ name: "", description: "", active: false });
+    refresh();
   };
 
   const handleNewRoleChange = (e) => {
@@ -105,10 +118,7 @@ export default function RolesPage() {
           <h1 className="text-2xl font-bold mb-4">Roles</h1>
         </div>
         <div className="w-1/2 mb-6 flex flex-col items-end">
-          <Button
-            onClick={() => get_roles(currentPage, pageSize)}
-            variant="outline"
-          >
+          <Button onClick={refresh} variant="outline">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -289,7 +299,7 @@ export default function RolesPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
+              {[5, 15, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -310,14 +320,6 @@ export default function RolesPage() {
           >
             First
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
           {[...Array(totalPages).keys()]
             .slice(
               Math.max(0, currentPage - 2),
@@ -333,16 +335,6 @@ export default function RolesPage() {
                 {page + 1}
               </Button>
             ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
           <Button
             size="sm"
             variant="outline"

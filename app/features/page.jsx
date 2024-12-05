@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useUtilStore } from "../store/utilstore";
 
 function FeaturesPage() {
   useAuthRedirect();
@@ -49,7 +50,8 @@ function FeaturesPage() {
   const setFilter = useFeatureStore((state) => state.setFilterValue);
   const searchTerm = useFeatureStore((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const pageSize = useUtilStore((state) => state.size);
+  const setPageSize = useUtilStore((state) => state.setSize);
   const [newFeature, setNewFeature] = useState({
     name: "",
     description: "",
@@ -77,6 +79,14 @@ function FeaturesPage() {
     }
   };
 
+  const refresh = () => {
+    if (currentApp != null) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == currentApp)[0];
+      get_app_features(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_features(currentPage, pageSize);
+    }
+  };
   const handleResize = (columnName) => (newSize) => {
     setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
   };
@@ -97,6 +107,7 @@ function FeaturesPage() {
   const handleAddFeature = (e) => {
     e.preventDefault();
     post_feature(newFeature, currentPage, pageSize);
+    setNewFeature({ name: "", description: "", active: false });
   };
 
   const handleNewFeatureChange = (e) => {
@@ -114,10 +125,7 @@ function FeaturesPage() {
           <h1 className="text-2xl font-bold mb-4">Features</h1>
         </div>
         <div className="w-1/2 mb-6 flex flex-col items-end">
-          <Button
-            onClick={() => get_features(currentPage, pageSize)}
-            variant="outline"
-          >
+          <Button onClick={refresh} variant="outline">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -367,7 +375,7 @@ function FeaturesPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 20, 50].map((size) => (
+              {[5, 15, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -388,14 +396,6 @@ function FeaturesPage() {
           >
             First
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
           {[...Array(totalPages).keys()]
             .slice(
               Math.max(0, currentPage - 2),
@@ -411,16 +411,6 @@ function FeaturesPage() {
                 {page + 1}
               </Button>
             ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
           <Button
             size="sm"
             variant="outline"

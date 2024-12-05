@@ -25,7 +25,7 @@ export default function Component() {
   const login = useLogInStore((state) => state.setToken);
   const loggein = useLogInStore((state) => state.blue_admin_token);
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     if (!username || !password) {
       setError("Please fill in all fields");

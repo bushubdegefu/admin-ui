@@ -33,6 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEndPointStore } from "../store/endpoint";
 import { useAppStore } from "../store/app";
 import { useToast } from "@/hooks/use-toast";
+import { setNonce } from "react-resizable-panels";
+import { useUtilStore } from "../store/utilstore";
 
 function EndpointsPage() {
   useAuthRedirect();
@@ -56,7 +58,8 @@ function EndpointsPage() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = useUtilStore((state) => state.size);
+  const setPageSize = useUtilStore((state) => state.setSize);
   const [columnWidths, setColumnWidths] = useState({
     id: 10,
     name: 15,
@@ -74,6 +77,7 @@ function EndpointsPage() {
   const handleResize = (columnName) => (newSize) => {
     setColumnWidths((prev) => ({ ...prev, [columnName]: newSize }));
   };
+
   useEffect(() => {
     get_endpoints(currentPage, pageSize);
   }, [currentPage, pageSize, get_endpoints]);
@@ -99,9 +103,19 @@ function EndpointsPage() {
       get_endpoints(currentPage, pageSize);
     }
   };
+
+  const refresh = () => {
+    if (currentApp != null) {
+      let cur_app = drop_apps.filter((dapp) => dapp.id == currentApp)[0];
+      get_app_endpoints(cur_app?.uuid, currentPage, pageSize);
+    } else {
+      get_endpoints(currentPage, pageSize);
+    }
+  };
   const handleAddNewEndpoint = (e) => {
     e.preventDefault();
     post_endpoint(newEndpoint, currentPage, pageSize);
+    setNewEndpoint({ name: "", description: "", method: "", route_path: "" });
   };
 
   const handleEdit = (id) => {
@@ -144,7 +158,7 @@ function EndpointsPage() {
     setPageSize(Number(newSize));
     setCurrentPage(1); // Reset to first page when changing page size
   };
-  // console.log(endpoints);
+
   return (
     <div className="container mx-auto p-4">
       <div className="w-full flex flex-row items-stretch p-5">
@@ -152,10 +166,7 @@ function EndpointsPage() {
           <h1 className="text-2xl font-bold mb-4">Endpoints Management</h1>
         </div>
         <div className="w-1/2 mb-6 flex flex-col items-end">
-          <Button
-            onClick={() => get_endpoints(currentPage, pageSize)}
-            variant="outline"
-          >
+          <Button onClick={refresh} variant="outline">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -497,7 +508,7 @@ function EndpointsPage() {
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 20, 50].map((size) => (
+              {[5, 15, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -518,14 +529,6 @@ function EndpointsPage() {
           >
             First
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
           {[...Array(totalPages).keys()]
             .slice(
               Math.max(0, currentPage - 2),
@@ -541,16 +544,6 @@ function EndpointsPage() {
                 {page + 1}
               </Button>
             ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
           <Button
             size="sm"
             variant="outline"

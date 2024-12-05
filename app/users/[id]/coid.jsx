@@ -40,8 +40,6 @@ import { useRoleStore } from "@/app/store/role";
 // import { useRouter } from "next/navigation";
 
 export function UserDetailsPage({ id }) {
-  useAuthRedirect();
-
   const user = useUserStore((state) => state.user);
   const get_user = useUserStore((state) => state.getSingleUser);
   const [editForm, setEditForm] = useState(user);

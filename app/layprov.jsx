@@ -4,7 +4,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Inter } from "next/font/google";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -25,7 +25,7 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { useLogInStore } from "./store/login";
 import Link from "next/link";
-import { Toast } from "@radix-ui/react-toast";
+import { useUtilStore } from "./store/utilstore";
 
 // import useAuthRedirect from "./utils/useAuthRedirect";
 
@@ -40,9 +40,52 @@ const navItems = [
   { name: "Pages", icon: BookOpen, href: "/bluepages" },
 ];
 
+const AppHistoryHandlerListener = () => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const pushHistory = useUtilStore((state) => state.pushHistory);
+  const popHistory = useUtilStore((state) => state.popHistory);
+  const lastElement = useUtilStore((state) => state.getPrevious);
+
+  //  for recording history
+  useEffect(() => {
+    if (!router || !router.events) return;
+
+    // Handler for route change events
+    const handleRouteChange = (url) => {
+      pushHistory(pathname);
+    };
+
+    // Listen for route change events
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    // Cleanup listener when the component unmounts
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events, router, pathname, pushHistory]);
+
+  //  for when back button is pushed
+  useEffect(() => {
+    // Function to handle the popstate event (back button press)
+    const handleBackButton = (event) => {
+      popHistory();
+    };
+
+    // Add event listener for the popstate event
+    window.addEventListener("popstate", handleBackButton);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+    };
+  }, []);
+
+  return <> </>;
+};
+
 export const LayoutProvider = ({ children }) => {
   const pathname = usePathname();
-  // useAuthRedirect();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const logout = useLogInStore((state) => state.resetTokenLogout);
@@ -126,6 +169,7 @@ export const LayoutProvider = ({ children }) => {
     return (
       <html lang="en">
         <body className={inter.className} suppressHydrationWarning={true}>
+          <AppHistoryHandlerListener />
           <div className="flex w-full h-screen bg-gray-100">{children}</div>
         </body>
       </html>
@@ -136,6 +180,7 @@ export const LayoutProvider = ({ children }) => {
         <body className={inter.className} suppressHydrationWarning={true}>
           <div className="flex h-screen">
             {/* Sidebar for larger screens */}
+            <AppHistoryHandlerListener />
             <aside className="hidden md:flex md:flex-col md:w-64 bg-amber-50 border-r border-amber-200">
               <div className="p-6">
                 <h2 className="text-2xl font-bold text-amber-800">

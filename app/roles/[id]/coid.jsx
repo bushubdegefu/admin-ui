@@ -41,7 +41,6 @@ import {
 import Link from "next/link";
 import useAuthRedirect from "../../utils/useAuthRedirect";
 import { useRoleStore } from "@/app/store/role";
-import { useUserStore } from "@/app/store/user";
 import { useAppStore } from "@/app/store/app";
 import {
   Select,
