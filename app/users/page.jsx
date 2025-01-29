@@ -49,6 +49,7 @@ export default function UsersPage() {
   const pageSize = useUtilStore((state) => state.size);
   const setPageSize = useUtilStore((state) => state.setSize);
   const [newUser, setNewUser] = useState({
+    name: "",
     email: "",
     password: "",
     disabled: false,
@@ -106,6 +107,7 @@ export default function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[100px]">ID</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>UUID</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead>Disabled</TableHead>
@@ -116,7 +118,8 @@ export default function UsersPage() {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell>{user.uuid}</TableCell>
+                <TableCell>{user?.name}</TableCell>
+                <TableCell>{user?.uuid}</TableCell>
                 <TableCell className="hidden md:table-cell">
                   {user.email}
                 </TableCell>

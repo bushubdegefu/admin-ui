@@ -63,7 +63,7 @@ const AppHistoryHandlerListener = () => {
     return () => {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
-  }, [router.events, router, pathname, pushHistory]);
+  }, [router.events, router, pathname, pushHistory, popHistory]);
 
   //  for when back button is pushed
   useEffect(() => {
@@ -79,7 +79,7 @@ const AppHistoryHandlerListener = () => {
     return () => {
       window.removeEventListener("popstate", handleBackButton);
     };
-  }, []);
+  });
 
   return <> </>;
 };

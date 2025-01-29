@@ -166,6 +166,15 @@ export function UserDetailsPage({ id }) {
                 <Input id="id" name="id" value={user?.id} readOnly />
               </div>
               <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={editForm?.name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
                 <Label htmlFor="name">Email</Label>
                 <Input
                   id="email"
@@ -197,6 +206,10 @@ export function UserDetailsPage({ id }) {
               <div>
                 <h3 className="text-lg font-semibold text-amber-800">ID</h3>
                 <p className="text-gray-700">{user?.id}</p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-amber-800">Name</h3>
+                <p className="text-gray-700">{user?.name}</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-amber-800">Email</h3>

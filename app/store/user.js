@@ -23,6 +23,7 @@ export const useUserStore = create((set, get) => ({
         },
       })
       .then(function (response) {
+        console.log(response?.data?.data);
         set((state) => ({
           ...state,
           users: response?.data?.data,
